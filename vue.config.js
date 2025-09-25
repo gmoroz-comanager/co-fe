@@ -1,7 +1,17 @@
 /** @type {import('@vue/cli-service').ProjectOptions} */
 module.exports = {
   devServer: {
-    port: process.env.VUE_APP_PORT || 8080
+    port: process.env.VUE_APP_PORT || 8080,
+    allowedHosts: "all", // Разрешаем все хосты
+    historyApiFallback: true,
+    client: {
+      webSocketURL: {
+        port: process.env.WS_PORT || 0, // Необходимо для корректной работы на Railway
+      },
+    },
+    headers: {
+      "Access-Control-Allow-Origin": "*", // Разрешаем CORS запросы
+    }
   },
   // Отключаем TypeScript проверку на этапе сборки, чтобы решить проблемы с зависимостями
   transpileDependencies: true,
