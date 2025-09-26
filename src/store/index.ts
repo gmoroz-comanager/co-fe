@@ -128,8 +128,9 @@ export default createStore<State>({
         // Get the authorization token
         const token = localStorage.getItem('token');
         
-        axios.get(`${API_URL}/audio-sources?populate=*`, {
+        axios.get(`${API_URL}/audio-sources?populate=*&sort=id:desc`, {
           headers: {
+            
             'Authorization': `Bearer ${token}`
           }
         })
