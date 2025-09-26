@@ -75,6 +75,11 @@
               <div v-if="responseJson" class="mt-4 p-4 bg-gray-100 rounded-md overflow-auto">
                 <pre class="text-xs">{{ responseJson }}</pre>
               </div>
+              
+              <div v-if="transcribeResponseJson" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md overflow-auto">
+                <h4 class="text-sm font-bold text-green-700 mb-2">Результат транскрибирования:</h4>
+                <pre class="text-xs">{{ transcribeResponseJson }}</pre>
+              </div>
             </form>
           </div>
         </div>
@@ -105,17 +110,26 @@
           <div v-else class="space-y-6">
             <div 
               v-for="audio in audioSources" 
-              :key="audio.id"
+              :key="audio.documentId || audio.id"
               class="bg-white rounded-lg shadow overflow-hidden transition-all hover:shadow-md p-4"
             >
               <div class="flex justify-between">
                 <h3 class="text-xl font-semibold text-gray-800">{{ audio.title }}</h3>
-                <button 
-                  class="px-2 py-1 bg-red-600 text-white rounded-md"
-                  @click="handleDelete(audio.id)"
-                >
-                  Удалить
-                </button>
+                <div class="flex space-x-2">
+                  <button 
+                    class="px-2 py-1 bg-green-600 text-white rounded-md"
+                    @click="handleTranscribe(audio.documentId || audio.id)"
+                    :disabled="audio.work_status === 'transcribing'"
+                  >
+                    {{ audio.work_status === 'transcribing' ? 'Транскрибирование...' : 'Transcribe' }}
+                  </button>
+                  <button 
+                    class="px-2 py-1 bg-red-600 text-white rounded-md"
+                    @click="handleDelete(audio.documentId || audio.id)"
+                  >
+                    Удалить
+                  </button>
+                </div>
               </div>
               
               <div v-if="audio.audio_file && audio.audio_file.length > 0" class="mt-4">
@@ -198,6 +212,7 @@ export default {
     const isSubmitting = ref(false);
     const isLoading = ref(false);
     const isDeleting = ref(false);
+    // Removed global isTranscribing ref - using audio.work_status instead
     const dialogVisible = ref(false);
     const dialogConfig = reactive({
       title: '',
@@ -205,6 +220,7 @@ export default {
     });
     const currentDeleteId = ref(null);
     const responseJson = ref('');
+    const transcribeResponseJson = ref('');
     
     // Computed
     const audioSources = computed(() => store.getters.audioSources);
@@ -338,13 +354,15 @@ export default {
       }
     }
     
-    function handleDelete(id) {
+    // Обновлено: используем documentId вместо id
+    function handleDelete(documentId) {
       dialogVisible.value = true;
       dialogConfig.title = 'Подтвердите удаление';
       dialogConfig.message = 'Вы уверены, что хотите удалить этот аудиофайл? Это действие невозможно отменить.';
-      currentDeleteId.value = id;
+      currentDeleteId.value = documentId;
     }
     
+    // Обновлено: используем documentId вместо id
     async function confirmDelete() {
       if (!currentDeleteId.value) return;
       
@@ -364,6 +382,39 @@ export default {
       }
     }
     
+    // Обновлено: используем documentId вместо id и store action
+    async function handleTranscribe(documentId) {
+      if (!documentId) return;
+      
+      transcribeResponseJson.value = '';
+      
+      try {
+        // Используем новый метод из store
+        const response = await store.dispatch('transcribeAudioSource', documentId);
+        
+        console.log('Результат транскрибирования:', response.data);
+        transcribeResponseJson.value = JSON.stringify(response.data, null, 2);
+        
+        // Обновляем список аудиозаписей, чтобы получить обновленную транскрипцию
+        fetchAudioSources();
+        
+        // Показываем уведомление об успешном транскрибировании
+        alert('Транскрибирование завершено успешно');
+      } catch (error) {
+        console.error('Ошибка при транскрибировании:', error);
+        
+        if (error.response) {
+          transcribeResponseJson.value = JSON.stringify(error.response.data, null, 2);
+        } else {
+          transcribeResponseJson.value = JSON.stringify(error.message, null, 2);
+        }
+        
+        alert('Ошибка при транскрибировании аудио');
+      } finally {
+        // No need to reset isTranscribing as we're using work_status
+      }
+    }
+    
     // Mount
     onMounted(() => {
       fetchAudioSources();
@@ -375,17 +426,20 @@ export default {
       isSubmitting,
       isLoading,
       isDeleting,
+      // isTranscribing removed,
       dialogVisible,
       dialogConfig,
       audioSources,
       responseJson,
+      transcribeResponseJson,
       getApiBaseUrl,
       handleFileUpload,
       handleSubmit,
       fetchAudioSources,
       handleDelete,
+      handleTranscribe,
       confirmDelete
     };
   }
-}
+};
 </script>

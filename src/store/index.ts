@@ -36,6 +36,7 @@ interface AudioSourceAttributes {
 
 interface AudioSource {
   id: number;
+  documentId: string; // Добавлен documentId
   attributes: AudioSourceAttributes;
 }
 
@@ -177,14 +178,36 @@ export default createStore<State>({
       })
     },
     
-    deleteAudioSource({ dispatch }, id: number) {
+    // Обновлено: используем documentId вместо id
+    deleteAudioSource({ dispatch }, documentId: string) {
       return new Promise<any>((resolve, reject) => {
         // Get the authorization token
         const token = localStorage.getItem('token');
         
-        axios.delete(`${API_URL}/audio-sources/${id}`, {
+        axios.delete(`${API_URL}/audio-sources/${documentId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
+          }
+        })
+        .then(response => {
+          // Refresh audio sources list
+          dispatch('fetchAudioSources')
+          resolve(response)
+        })
+        .catch(error => reject(error))
+      })
+    },
+    
+    // Новый метод для транскрибирования с использованием documentId
+    transcribeAudioSource({ dispatch }, documentId: string) {
+      return new Promise<any>((resolve, reject) => {
+        // Get the authorization token
+        const token = localStorage.getItem('token');
+        
+        axios.post(`${API_URL}/audio-sources/${documentId}/transcribe`, {}, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         })
         .then(response => {
