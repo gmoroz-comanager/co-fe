@@ -1,12 +1,35 @@
 <template>
-  <div id="app">
-    <nav v-if="isLoggedIn">
-      <router-link to="/">Главная</router-link> |
-      <router-link to="/audio">Аудио</router-link> |
-      <a href="#" @click.prevent="logout">Выйти</a>
-    </nav>
-    <router-view/>
-  </div>
+  <v-app>
+    <v-app-bar v-if="isLoggedIn" app color="primary" dark>
+      <v-app-bar-title>
+        <div class="d-flex align-center">
+          <v-icon class="mr-2">mdi-alpha-c-box</v-icon>
+          <span class="font-weight-bold">Flow</span>
+        </div>
+      </v-app-bar-title>
+      
+      <v-spacer></v-spacer>
+      
+      <v-btn to="/" text>
+        <v-icon left>mdi-home</v-icon>
+        Главная
+      </v-btn>
+      
+      <v-btn to="/audio" text>
+        <v-icon left>mdi-waveform</v-icon>
+        Аудио
+      </v-btn>
+      
+      <v-btn @click="logout" text>
+        <v-icon left>mdi-logout</v-icon>
+        Выйти
+      </v-btn>
+    </v-app-bar>
+    
+    <v-main>
+      <router-view />
+    </v-main>
+  </v-app>
 </template>
 
 <script>
@@ -27,25 +50,20 @@ export default {
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
+html, body {
+  font-family: 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
 }
 
-nav {
-  padding: 30px;
+.v-application {
+  background-color: #F5F7FA !important;
 }
 
-nav a {
-  font-weight: bold;
-  color: #2c3e50;
-  margin: 0 10px;
-}
-
-nav a.router-link-exact-active {
-  color: #42b983;
+.v-main {
+  min-height: 100vh;
 }
 </style>

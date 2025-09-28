@@ -3,6 +3,7 @@ import Home from '../views/Home.vue'
 import Login from '../views/Login.vue'
 import Register from '../views/Register.vue'
 import AudioManager from '../views/AudioManager.vue'
+import IdeaDetail from '../views/IdeaDetail.vue'
 import store from '../store'
 
 const routes: Array<RouteRecordRaw> = [
@@ -26,6 +27,12 @@ const routes: Array<RouteRecordRaw> = [
     path: '/audio',
     name: 'AudioManager',
     component: AudioManager,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/ideas/:id',
+    name: 'IdeaDetail',
+    component: IdeaDetail,
     meta: { requiresAuth: true }
   }
 ]

@@ -1,55 +1,89 @@
 <template>
-  <div class="register">
-    <h1>Регистрация</h1>
-    <form @submit.prevent="register">
-      <div class="form-group">
-        <label for="username">Имя пользователя:</label>
-        <input 
-          type="text" 
-          id="username" 
-          v-model="user.username" 
-          required
-          class="form-control"
-        />
-      </div>
+  <v-container fluid class="fill-height pa-0">
+    <v-row no-gutters class="fill-height">
+      <!-- Left side with registration form -->
+      <v-col cols="12" md="5" class="register-container">
+        <v-container class="register-form-container">
+          <div class="logo-container mb-8">
+            <v-icon color="primary" size="x-large" class="logo-icon">mdi-alpha-c-box</v-icon>
+            <span class="text-primary font-weight-bold text-h6">Flow</span>
+          </div>
+          
+          <h1 class="text-h4 font-weight-bold mb-2">Join CoFlow</h1>
+          <h2 class="text-h5 font-weight-medium mb-8">Create your account</h2>
+          
+          <v-form @submit.prevent="register">
+            <v-text-field
+              v-model="user.username"
+              label="Username"
+              variant="outlined"
+              :disabled="loading"
+              required
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="user.email"
+              label="Email address"
+              variant="outlined"
+              :disabled="loading"
+              required
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-text-field
+              v-model="user.password"
+              label="Password"
+              variant="outlined"
+              :disabled="loading"
+              :append-inner-icon="showPassword ? 'mdi-eye-off' : 'mdi-eye'"
+              @click:append-inner="showPassword = !showPassword"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              class="mb-6"
+            ></v-text-field>
+            
+            <v-btn
+              block
+              color="primary"
+              size="large"
+              type="submit"
+              :loading="loading"
+              class="mb-4"
+            >
+              Register
+            </v-btn>
+            
+            <div class="text-center">
+              <router-link to="/login" class="text-decoration-none text-primary text-caption">Already have an account? Sign in</router-link>
+            </div>
+            
+            <v-alert
+              v-if="error"
+              type="error"
+              class="mt-4"
+              variant="tonal"
+              density="compact"
+            >
+              {{ error }}
+            </v-alert>
+          </v-form>
+        </v-container>
+      </v-col>
       
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input 
-          type="email" 
-          id="email" 
-          v-model="user.email" 
-          required
-          class="form-control"
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="password">Пароль:</label>
-        <input 
-          type="password" 
-          id="password" 
-          v-model="user.password" 
-          required
-          class="form-control"
-        />
-      </div>
-      
-      <div class="form-group">
-        <button type="submit" class="btn btn-primary" :disabled="loading">
-          {{ loading ? 'Загрузка...' : 'Зарегистрироваться' }}
-        </button>
-      </div>
-      
-      <div v-if="error" class="alert alert-danger">
-        {{ error }}
-      </div>
-      
-      <div>
-        <p>Уже есть учетная запись? <router-link to="/login">Войдите</router-link></p>
-      </div>
-    </form>
-  </div>
+      <!-- Right side with illustration -->
+      <v-col cols="12" md="7" class="d-none d-md-flex illustration-container bg-primary">
+        <div class="fill-height d-flex align-center justify-center">
+          <v-img
+            src="/img/register-illustration.svg"
+            max-width="600"
+            contain
+            class="illustration-content"
+          ></v-img>
+        </div>
+      </v-col>
+    </v-row>
+  </v-container>
 </template>
 
 <script>
@@ -63,7 +97,8 @@ export default {
         password: ''
       },
       loading: false,
-      error: null
+      error: null,
+      showPassword: false
     }
   },
   created() {
@@ -83,7 +118,7 @@ export default {
         })
         .catch(err => {
           console.error(err)
-          this.error = 'Ошибка регистрации. Возможно, email уже используется.'
+          this.error = 'Registration failed. This email may already be in use.'
         })
         .finally(() => {
           this.loading = false
@@ -94,54 +129,32 @@ export default {
 </script>
 
 <style scoped>
-.register {
+.register-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.register-form-container {
   max-width: 400px;
-  margin: 0 auto;
-  padding: 20px;
 }
 
-.form-group {
-  margin-bottom: 15px;
+.logo-container {
+  display: flex;
+  align-items: center;
 }
 
-.form-control {
-  width: 100%;
-  padding: 8px;
-  box-sizing: border-box;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.logo-icon {
+  margin-right: 4px;
 }
 
-label {
-  display: block;
-  margin-bottom: 5px;
+.illustration-container {
+  position: relative;
+  height: 100%;
 }
 
-.btn {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background-color: #42b983;
-  color: white;
-}
-
-.btn-primary:disabled {
-  background-color: #95d5b7;
-}
-
-.alert {
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
-}
-
-.alert-danger {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
+.illustration-content {
+  opacity: 0.9;
 }
 </style>

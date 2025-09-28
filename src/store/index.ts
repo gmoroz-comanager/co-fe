@@ -1,5 +1,6 @@
 import { createStore } from 'vuex'
 import axios from 'axios'
+import ideasModule from './modules/ideas'
 
 const API_URL = process.env.VUE_APP_API_URL || 'http://localhost:1337/api'
 
@@ -47,6 +48,9 @@ interface State {
 }
 
 export default createStore<State>({
+  modules: {
+    ideas: ideasModule
+  },
   state: {
     token: localStorage.getItem('token') || '',
     user: JSON.parse(localStorage.getItem('user') || '{}'),
