@@ -1,21 +1,21 @@
 <template>
   <v-container fluid class="fill-height pa-0">
     <v-row no-gutters class="fill-height">
-      <!-- Left side with registration form -->
-      <v-col cols="12" md="5" class="register-container">
-        <v-container class="register-form-container">
+      <!-- Left side with login form -->
+      <v-col cols="12" md="5" class="login-container">
+        <v-container class="login-form-container">
           <div class="logo-container mb-8">
             <v-icon color="primary" size="x-large" class="logo-icon">mdi-alpha-c-box</v-icon>
             <span class="text-primary font-weight-bold text-h6">Flow</span>
           </div>
           
-          <h1 class="text-h4 font-weight-bold mb-2">Join CoFlow</h1>
-          <h2 class="text-h5 font-weight-medium mb-8">Create your account</h2>
+          <h1 class="text-h4 font-weight-bold mb-2">Welcome to CoFlow</h1>
+          <h2 class="text-h5 font-weight-medium mb-8">Sign into your account</h2>
           
-          <v-form @submit.prevent="register">
+          <v-form @submit.prevent="login">
             <v-text-field
-              v-model="user.username"
-              label="Username"
+              v-model="credentials.email"
+              label="Phone or Email address"
               variant="outlined"
               :disabled="loading"
               required
@@ -23,16 +23,7 @@
             ></v-text-field>
             
             <v-text-field
-              v-model="user.email"
-              label="Email address"
-              variant="outlined"
-              :disabled="loading"
-              required
-              class="mb-4"
-            ></v-text-field>
-            
-            <v-text-field
-              v-model="user.password"
+              v-model="credentials.password"
               label="Password"
               variant="outlined"
               :disabled="loading"
@@ -51,11 +42,11 @@
               :loading="loading"
               class="mb-4"
             >
-              Register
+              Log In
             </v-btn>
             
             <div class="text-center">
-              <router-link to="/login" class="text-decoration-none text-primary text-caption">Already have an account? Sign in</router-link>
+              <router-link to="/register" class="text-decoration-none text-primary text-caption">Don't have an account? Register</router-link>
             </div>
             
             <v-alert
@@ -75,7 +66,7 @@
       <v-col cols="12" md="7" class="d-none d-md-flex illustration-container bg-primary">
         <div class="fill-height d-flex align-center justify-center">
           <v-img
-            src="/img/register-illustration.svg"
+            src="/img/login-illustration.svg"
             max-width="600"
             contain
             class="illustration-content"
@@ -88,11 +79,10 @@
 
 <script>
 export default {
-  name: 'Register',
+  name: 'Login',
   data() {
     return {
-      user: {
-        username: '',
+      credentials: {
         email: '',
         password: ''
       },
@@ -103,22 +93,22 @@ export default {
   },
   created() {
     // If already logged in, redirect to home
-    if (this.$store.getters.isLoggedIn) {
+    if (this.$store.getters['auth/isLoggedIn']) {
       this.$router.push('/')
     }
   },
   methods: {
-    register() {
+    login() {
       this.loading = true
       this.error = null
       
-      this.$store.dispatch('register', this.user)
+      this.$store.dispatch('auth/login', this.credentials)
         .then(() => {
           this.$router.push('/')
         })
         .catch(err => {
           console.error(err)
-          this.error = 'Registration failed. This email may already be in use.'
+          this.error = 'Invalid credentials. Please check your email and password.'
         })
         .finally(() => {
           this.loading = false
@@ -129,14 +119,14 @@ export default {
 </script>
 
 <style scoped>
-.register-container {
+.login-container {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
 }
 
-.register-form-container {
+.login-form-container {
   max-width: 400px;
 }
 
@@ -153,6 +143,11 @@ export default {
   position: relative;
   height: 100%;
 }
+
+.illustration {
+  height: 100%;
+}
+
 
 .illustration-content {
   opacity: 0.9;

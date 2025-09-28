@@ -1,0 +1,90 @@
+import { httpService } from '@/core/api';
+
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterData {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  jwt: string;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    [key: string]: any;
+  };
+}
+
+/**
+ * Authentication service for handling login, registration, and logout
+ */
+class AuthService {
+  /**
+   * Login with email and password
+   */
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    const response = await httpService.post<AuthResponse>('/auth/local', {
+      identifier: credentials.email,
+      password: credentials.password
+    });
+    
+    this.setAuthData(response.data);
+    return response.data;
+  }
+
+  /**
+   * Register a new user
+   */
+  async register(data: RegisterData): Promise<AuthResponse> {
+    const response = await httpService.post<AuthResponse>('/auth/local/register', {
+      username: data.username,
+      email: data.email,
+      password: data.password
+    });
+    
+    this.setAuthData(response.data);
+    return response.data;
+  }
+
+  /**
+   * Logout the current user
+   */
+  logout(): void {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  }
+
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated(): boolean {
+    return !!localStorage.getItem('token');
+  }
+
+  /**
+   * Get current user data
+   */
+  getCurrentUser(): any {
+    const userData = localStorage.getItem('user');
+    return userData ? JSON.parse(userData) : null;
+  }
+
+  /**
+   * Set authentication data in local storage
+   */
+  private setAuthData(authData: AuthResponse): void {
+    localStorage.setItem('token', authData.jwt);
+    localStorage.setItem('user', JSON.stringify(authData.user));
+  }
+}
+
+// Create singleton instance
+const authService = new AuthService();
+
+export default authService;

@@ -21,7 +21,7 @@ module.exports = {
   pages: {
     index: {
       // Точка входа для страницы
-      entry: 'src/main.js',
+      entry: 'src/main.ts',
       // Исходный шаблон
       template: 'public/index.html',
       // Выходной файл

@@ -19,7 +19,10 @@
         <v-icon left>mdi-waveform</v-icon>
         Аудио
       </v-btn>
-      
+      <v-btn to="/ideas" text>
+        <v-icon left>mdi-lightbulb-outline</v-icon>
+        Идеи
+      </v-btn>
       <v-btn @click="logout" text>
         <v-icon left>mdi-logout</v-icon>
         Выйти
@@ -37,12 +40,12 @@ export default {
   name: 'App',
   computed: {
     isLoggedIn() {
-      return this.$store.getters.isLoggedIn
+      return this.$store.getters['auth/isLoggedIn']
     }
   },
   methods: {
     logout() {
-      this.$store.dispatch('logout')
+      this.$store.dispatch('auth/logout')
       this.$router.push('/login')
     }
   }

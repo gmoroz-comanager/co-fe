@@ -92,18 +92,18 @@
             <h2 class="text-xl font-semibold text-gray-800">Ваши аудиофайлы</h2>
             <button 
               class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md"
-              :disabled="isLoading" 
+              :disabled="loading" 
               @click="fetchAudioSources"
             >
-              {{ isLoading ? 'Загрузка...' : 'Обновить' }}
+              {{ loading ? 'Загрузка...' : 'Обновить' }}
             </button>
           </div>
           
-          <div v-if="!isLoading && !audioSources.length" class="text-center py-8">
+          <div v-if="!loading && !audioSources.length" class="text-center py-8">
             <p>Аудиофайлов еще нет</p>
           </div>
           
-          <div v-else-if="isLoading" class="text-center py-8">
+          <div v-else-if="loading" class="text-center py-8">
             <p>Загрузка...</p>
           </div>
           
@@ -114,14 +114,14 @@
               class="bg-white rounded-lg shadow overflow-hidden transition-all hover:shadow-md p-4"
             >
               <div class="flex justify-between">
-                <h3 class="text-xl font-semibold text-gray-800">{{ audio.title }}</h3>
+                <h3 class="text-xl font-semibold text-gray-800">{{ getAudioTitle(audio) }}</h3>
                 <div class="flex space-x-2">
                   <button 
                     class="px-2 py-1 bg-green-600 text-white rounded-md"
                     @click="handleTranscribe(audio.documentId || audio.id)"
-                    :disabled="audio.work_status === 'transcribing'"
+                    :disabled="getAudioWorkStatus(audio) === 'transcribing'"
                   >
-                    {{ audio.work_status === 'transcribing' ? 'Транскрибирование...' : 'Transcribe' }}
+                    {{ getAudioWorkStatus(audio) === 'transcribing' ? 'Транскрибирование...' : 'Transcribe' }}
                   </button>
                   <button 
                     class="px-2 py-1 bg-red-600 text-white rounded-md"
@@ -132,32 +132,32 @@
                 </div>
               </div>
               
-              <div v-if="audio.audio_file && audio.audio_file.length > 0" class="mt-4">
+              <div v-if="getAudioFiles(audio).length > 0" class="mt-4">
                 <div 
-                  v-for="file in audio.audio_file" 
+                  v-for="file in getAudioFiles(audio)" 
                   :key="file.id"
                   class="mb-3"
                 >
                   <div class="flex items-center justify-between mb-1">
-                    <div class="text-sm text-gray-600">{{ file.name }}</div>
-                    <div class="text-xs text-gray-500">{{ (file.size / 1024 / 1024).toFixed(2) }} MB</div>
+                    <div class="text-sm text-gray-600">{{ getFileName(file) }}</div>
+                    <div class="text-xs text-gray-500">{{ getFileSize(file) }} MB</div>
                   </div>
                   <audio 
                     controls
                     class="w-full"
-                    :src="getApiBaseUrl() + file.url"
+                    :src="getBaseUrl() + getFileUrl(file)"
                   ></audio>
                 </div>
               </div>
               
-              <div v-if="audio.transcription" class="mt-4 pt-3 border-t border-gray-100">
+              <div v-if="getAudioTranscription(audio)" class="mt-4 pt-3 border-t border-gray-100">
                 <h4 class="text-sm font-medium text-gray-700 mb-2">Транскрипция:</h4>
-                <p class="text-gray-600 text-sm">{{ audio.transcription }}</p>
+                <p class="text-gray-600 text-sm">{{ getAudioTranscription(audio) }}</p>
               </div>
               
-              <div v-if="audio.ideas" class="mt-4 pt-3 border-t border-gray-100">
+              <div v-if="getAudioIdeas(audio)" class="mt-4 pt-3 border-t border-gray-100">
                 <h4 class="text-sm font-medium text-gray-700 mb-2">Идеи:</h4>
-                <div class="text-gray-600 text-sm" v-html="audio.ideas"></div>
+                <div class="text-gray-600 text-sm" v-html="getAudioIdeas(audio)"></div>
               </div>
             </div>
           </div>
@@ -189,90 +189,107 @@
   </div>
 </template>
 
-<script>
-import { ref, reactive, computed, onMounted } from 'vue';
+<script lang="ts">
+import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import axios from 'axios';
+import httpService from '@/core/api/http';
 
-export default {
+export default defineComponent({
   name: 'AudioManager',
+  
   setup() {
     // Store
     const store = useStore();
     
     // Refs
-    const uploadRef = ref(null);
     const audioForm = reactive({
       title: '',
       transcription: '',
       ideas: '',
-      files: []
+      files: [] as File[]
     });
     
     const isSubmitting = ref(false);
-    const isLoading = ref(false);
     const isDeleting = ref(false);
-    // Removed global isTranscribing ref - using audio.work_status instead
     const dialogVisible = ref(false);
     const dialogConfig = reactive({
       title: '',
       message: ''
     });
-    const currentDeleteId = ref(null);
+    const currentDeleteId = ref<string | null>(null);
     const responseJson = ref('');
     const transcribeResponseJson = ref('');
     
     // Computed
-    const audioSources = computed(() => store.getters.audioSources);
+    const audioSources = computed(() => store.getters['audio/audioSources']);
+    const loading = computed(() => store.getters['audio/isLoading']);
+    const error = computed(() => store.state.audio.error);
     
     // Methods
-    function getApiBaseUrl() {
-      const apiUrl = process.env.VUE_APP_API_URL || 'http://localhost:1337/api';
-      return apiUrl.replace(/\/api$/, '');
+    function getBaseUrl(): string {
+      return httpService.getBaseUrl();
     }
     
-    function getApiUrl() {
-      return process.env.VUE_APP_API_URL || 'http://localhost:1337/api';
-    }
-    
-    function handleFileUpload(event) {
-      audioForm.files = [...event.target.files];
-    }
-    
-    // Функция для загрузки файлов в медиабиблиотеку Strapi
-    async function uploadFiles(files) {
-      try {
-        const formData = new FormData();
-        
-        for (let i = 0; i < files.length; i++) {
-          formData.append('files', files[i]);
-        }
-        
-        const token = localStorage.getItem('token');
-        
-        // Загружаем файлы через API загрузки
-        const response = await axios.post(
-          `${getApiUrl()}/upload`,
-          formData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            }
-          }
-        );
-        
-        console.log('Файлы успешно загружены:', response.data);
-        
-        // Возвращаем массив ID загруженных файлов
-        return response.data.map(file => file.id);
-      } catch (error) {
-        console.error('Ошибка при загрузке файлов:', error);
-        throw error;
+    function handleFileUpload(event: Event): void {
+      const target = event.target as HTMLInputElement;
+      if (target.files) {
+        audioForm.files = Array.from(target.files);
       }
     }
     
-    async function handleSubmit() {
+    // Helper methods for direct access to audio properties (Strapi v5 format)
+    function getAudioTitle(audio: any): string {
+      if (!audio) return 'Unknown';
+      return audio.title || 'Untitled Audio';
+    }
+    
+    function getAudioWorkStatus(audio: any): string {
+      if (!audio) return '';
+      return audio.work_status || '';
+    }
+    
+    function getAudioTranscription(audio: any): string {
+      if (!audio) return '';
+      return audio.transcription || '';
+    }
+    
+    function getAudioIdeas(audio: any): string {
+      if (!audio) return '';
+      return audio.ideas || '';
+    }
+    
+    function getAudioFiles(audio: any): any[] {
+      if (!audio) return [];
+      
+      // Direct files array
+      if (Array.isArray(audio.audio_file)) {
+        return audio.audio_file;
+      }
+      
+      // Nested in data property (for relations)
+      if (audio.audio_file && audio.audio_file.data && Array.isArray(audio.audio_file.data)) {
+        return audio.audio_file.data;
+      }
+      
+      return [];
+    }
+    
+    function getFileName(file: any): string {
+      if (!file) return 'Unknown';
+      return file.name || 'Unnamed File';
+    }
+    
+    function getFileUrl(file: any): string {
+      if (!file) return '';
+      return file.url || '';
+    }
+    
+    function getFileSize(file: any): string {
+      if (!file || typeof file.size !== 'number') return '0';
+      return (file.size / 1024 / 1024).toFixed(2);
+    }
+    
+    async function handleSubmit(): Promise<void> {
       if (!audioForm.title) {
         alert('Необходимо указать заголовок');
         return;
@@ -282,53 +299,38 @@ export default {
       responseJson.value = '';
       
       try {
-        let uploadedFileIds = [];
+        let uploadedFileIds: number[] = [];
         
-        // Шаг 1: Загрузка файлов, если они есть
+        // Step 1: Upload files if they exist
         if (audioForm.files && audioForm.files.length > 0) {
-          uploadedFileIds = await uploadFiles(audioForm.files);
+          const uploadedFiles = await store.dispatch('audio/uploadFiles', audioForm.files);
+          uploadedFileIds = uploadedFiles.map((file: any) => file.id);
           console.log('IDs загруженных файлов:', uploadedFileIds);
         }
         
-        // Шаг 2: Создание записи с ссылками на файлы
+        // Step 2: Create audio source with file references
         const requestData = {
-          data: {
-            title: audioForm.title,
-            transcription: audioForm.transcription || '',
-            ideas: audioForm.ideas || '',
-            audio_file: uploadedFileIds // Ссылки на загруженные файлы
-          }
+          title: audioForm.title,
+          transcription: audioForm.transcription || '',
+          ideas: audioForm.ideas || '',
+          audio_file: uploadedFileIds
         };
         
         console.log('Создание записи с данными:', requestData);
         
-        const token = localStorage.getItem('token');
+        const response = await store.dispatch('audio/createAudioSource', requestData);
         
-        // Создаем запись
-        const response = await axios.post(
-          `${getApiUrl()}/audio-sources`,
-          requestData,
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        responseJson.value = JSON.stringify(response, null, 2);
+        console.log('Запись успешно создана:', response);
         
-        responseJson.value = JSON.stringify(response.data, null, 2);
-        console.log('Запись успешно создана:', response.data);
-        
-        // Сбрасываем форму
+        // Reset form
         audioForm.title = '';
         audioForm.transcription = '';
         audioForm.ideas = '';
         audioForm.files = [];
         
         alert('Аудио успешно добавлено');
-        // Обновляем список
-        fetchAudioSources();
-      } catch (error) {
+      } catch (error: any) {
         console.error('Ошибка:', error);
         if (error.response) {
           responseJson.value = JSON.stringify(error.response.data, null, 2);
@@ -341,37 +343,30 @@ export default {
       }
     }
     
-    async function fetchAudioSources() {
-      isLoading.value = true;
-      
+    async function fetchAudioSources(): Promise<void> {
       try {
-        await store.dispatch('fetchAudioSources');
+        await store.dispatch('audio/fetchAudioSources');
       } catch (error) {
         console.error(error);
         alert('Ошибка загрузки аудиофайлов');
-      } finally {
-        isLoading.value = false;
       }
     }
     
-    // Обновлено: используем documentId вместо id
-    function handleDelete(documentId) {
+    function handleDelete(documentId: string): void {
       dialogVisible.value = true;
       dialogConfig.title = 'Подтвердите удаление';
       dialogConfig.message = 'Вы уверены, что хотите удалить этот аудиофайл? Это действие невозможно отменить.';
       currentDeleteId.value = documentId;
     }
     
-    // Обновлено: используем documentId вместо id
-    async function confirmDelete() {
+    async function confirmDelete(): Promise<void> {
       if (!currentDeleteId.value) return;
       
       isDeleting.value = true;
       
       try {
-        await store.dispatch('deleteAudioSource', currentDeleteId.value);
+        await store.dispatch('audio/deleteAudioSource', currentDeleteId.value);
         alert('Аудиофайл удален');
-        fetchAudioSources();
       } catch (error) {
         console.error(error);
         alert('Ошибка при удалении аудиофайла');
@@ -382,25 +377,22 @@ export default {
       }
     }
     
-    // Обновлено: используем documentId вместо id и store action
-    async function handleTranscribe(documentId) {
+    async function handleTranscribe(documentId: string): Promise<void> {
       if (!documentId) return;
       
       transcribeResponseJson.value = '';
       
       try {
-        // Используем новый метод из store
-        const response = await store.dispatch('transcribeAudioSource', documentId);
+        const response = await store.dispatch('audio/transcribeAudioSource', documentId);
         
-        console.log('Результат транскрибирования:', response.data);
-        transcribeResponseJson.value = JSON.stringify(response.data, null, 2);
+        console.log('Результат транскрибирования:', response);
+        transcribeResponseJson.value = JSON.stringify(response, null, 2);
         
-        // Обновляем список аудиозаписей, чтобы получить обновленную транскрипцию
-        fetchAudioSources();
+        // Refresh audio list to get updated transcription
+        await fetchAudioSources();
         
-        // Показываем уведомление об успешном транскрибировании
         alert('Транскрибирование завершено успешно');
-      } catch (error) {
+      } catch (error: any) {
         console.error('Ошибка при транскрибировании:', error);
         
         if (error.response) {
@@ -410,8 +402,6 @@ export default {
         }
         
         alert('Ошибка при транскрибировании аудио');
-      } finally {
-        // No need to reset isTranscribing as we're using work_status
       }
     }
     
@@ -421,25 +411,32 @@ export default {
     });
     
     return {
-      uploadRef,
       audioForm,
       isSubmitting,
-      isLoading,
+      loading,
       isDeleting,
-      // isTranscribing removed,
       dialogVisible,
       dialogConfig,
       audioSources,
       responseJson,
       transcribeResponseJson,
-      getApiBaseUrl,
+      getBaseUrl,
       handleFileUpload,
       handleSubmit,
       fetchAudioSources,
       handleDelete,
       handleTranscribe,
-      confirmDelete
+      confirmDelete,
+      // Helper methods
+      getAudioTitle,
+      getAudioWorkStatus,
+      getAudioTranscription,
+      getAudioIdeas,
+      getAudioFiles,
+      getFileName,
+      getFileUrl,
+      getFileSize
     };
   }
-};
+});
 </script>

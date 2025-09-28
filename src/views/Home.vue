@@ -56,7 +56,7 @@
                   <v-list-item
                     v-for="idea in recentIdeas"
                     :key="idea.id"
-                    :to="`/ideas/${idea.id}`"
+                    :to="{ name: 'IdeaDetail', params: { id: idea.id } }"
                   >
                     <template v-slot:prepend>
                       <v-badge
@@ -77,7 +77,7 @@
                       <v-btn
                         icon="mdi-chevron-right"
                         variant="text"
-                        :to="`/ideas/${idea.id}`"
+                        :to="{ name: 'IdeaDetail', params: { id: idea.id } }"
                       ></v-btn>
                     </template>
                   </v-list-item>
@@ -86,6 +86,17 @@
                 <v-card-text v-else class="text-center py-4">
                   No ideas found
                 </v-card-text>
+                
+                <v-card-actions>
+                  <v-spacer></v-spacer>
+                  <v-btn
+                    color="primary"
+                    variant="text"
+                    :to="{ name: 'IdeasList' }"
+                  >
+                    View All Ideas
+                  </v-btn>
+                </v-card-actions>
               </v-card>
             </div>
           </v-card-text>
@@ -114,7 +125,18 @@
                 </v-btn>
               </v-col>
               
-              <!-- Add more quick actions as needed -->
+              <v-col cols="6">
+                <v-btn
+                  block
+                  color="secondary"
+                  variant="elevated"
+                  to="/ideas"
+                  prepend-icon="mdi-lightbulb"
+                  class="mb-4"
+                >
+                  Ideas Catalog
+                </v-btn>
+              </v-col>
             </v-row>
           </v-card-text>
         </v-card>
@@ -123,23 +145,24 @@
   </v-container>
 </template>
 
-<script>
-import { computed, onMounted } from 'vue';
+<script lang="ts">
+import { defineComponent, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 
-export default {
+export default defineComponent({
   name: 'Home',
+  
   setup() {
     const store = useStore();
     
     // Computed properties
-    const loading = computed(() => store.state.ideas.loading);
-    const totalIdeas = computed(() => store.state.ideas.totalIdeas);
-    const newIdeas = computed(() => store.state.ideas.newIdeas);
+    const loading = computed(() => store.getters['ideas/isLoading']);
+    const totalIdeas = computed(() => store.getters['ideas/totalIdeas']);
+    const newIdeas = computed(() => store.getters['ideas/newIdeas']);
     const recentIdeas = computed(() => store.getters['ideas/recentIdeas']);
     
     // Methods
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string) => {
       const date = new Date(dateString);
       return new Intl.DateTimeFormat('en-US', {
         year: 'numeric',
@@ -148,7 +171,7 @@ export default {
       }).format(date);
     };
     
-    const getStatusColor = (status) => {
+    const getStatusColor = (status: string | undefined) => {
       switch (status) {
         case 'new': return 'red';
         case 'readyToPublish': return 'orange';
@@ -171,7 +194,7 @@ export default {
       getStatusColor
     };
   }
-}
+});
 </script>
 
 <style scoped>
