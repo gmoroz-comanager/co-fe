@@ -1,22 +1,22 @@
 <template>
   <div class="container mx-auto p-6 max-w-7xl">
-    <h1 class="text-3xl font-bold mb-8">Управление аудио</h1>
+    <h1 class="text-3xl font-bold mb-8">Audio Management</h1>
     
     <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
       <!-- Audio Creation Form -->
       <div class="lg:col-span-4">
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
           <div class="bg-gray-50 px-4 py-3 border-b border-gray-200">
-            <h2 class="text-xl font-semibold text-gray-800">Добавить новый аудиофайл</h2>
+            <h2 class="text-xl font-semibold text-gray-800">Add New Audio File</h2>
           </div>
           <div class="p-4">
             <form @submit.prevent="handleSubmit">
               <div class="mb-4">
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Заголовок:</label>
+                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title:</label>
                 <input 
                   id="title" 
                   v-model="audioForm.title" 
-                  placeholder="Введите заголовок"
+                  placeholder="Enter title"
                   :disabled="isSubmitting"
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md"
@@ -24,7 +24,7 @@
               </div>
               
               <div class="mb-4">
-                <label for="audio_file" class="block text-sm font-medium text-gray-700 mb-1">Аудиофайл(ы):</label>
+                <label for="audio_file" class="block text-sm font-medium text-gray-700 mb-1">Audio File(s):</label>
                 <input 
                   type="file" 
                   id="audio_file" 
@@ -34,32 +34,32 @@
                   :disabled="isSubmitting"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
-                <div class="text-xs text-gray-500 mt-1">Можно выбрать несколько аудиофайлов (максимум 5)</div>
+                <div class="text-xs text-gray-500 mt-1">You can select multiple audio files (maximum 5)</div>
               </div>
               
               <div class="mb-4">
-                <label for="transcription" class="block text-sm font-medium text-gray-700 mb-1">Транскрипция:</label>
+                <label for="transcription" class="block text-sm font-medium text-gray-700 mb-1">Transcription:</label>
                 <textarea 
                   id="transcription" 
                   v-model="audioForm.transcription" 
                   rows="4"
                   :disabled="isSubmitting"
-                  placeholder="Транскрипция аудиофайла"
+                  placeholder="Audio file transcription"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md"
                 ></textarea>
               </div>
               
               <div class="mb-4">
-                <label for="ideas" class="block text-sm font-medium text-gray-700 mb-1">Идеи:</label>
+                <label for="ideas" class="block text-sm font-medium text-gray-700 mb-1">Ideas:</label>
                 <textarea 
                   id="ideas" 
                   v-model="audioForm.ideas" 
                   rows="4"
                   :disabled="isSubmitting"
-                  placeholder="Идеи и заметки"
+                  placeholder="Ideas and notes"
                   class="w-full px-3 py-2 border border-gray-300 rounded-md"
                 ></textarea>
-                <div class="text-xs text-gray-500 mt-1">Можно использовать форматирование</div>
+                <div class="text-xs text-gray-500 mt-1">You can use formatting</div>
               </div>
               
               <div class="mt-6">
@@ -68,7 +68,7 @@
                   :disabled="isSubmitting"
                   class="w-full px-4 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700"
                 >
-                  {{ isSubmitting ? 'Загрузка...' : 'Создать' }}
+                  {{ isSubmitting ? 'Loading...' : 'Create' }}
                 </button>
               </div>
 
@@ -77,7 +77,7 @@
               </div>
               
               <div v-if="transcribeResponseJson" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-md overflow-auto">
-                <h4 class="text-sm font-bold text-green-700 mb-2">Результат транскрибирования:</h4>
+                <h4 class="text-sm font-bold text-green-700 mb-2">Transcription Result:</h4>
                 <pre class="text-xs">{{ transcribeResponseJson }}</pre>
               </div>
             </form>
@@ -89,22 +89,22 @@
       <div class="lg:col-span-8">
         <div class="bg-white rounded-lg shadow-md p-4 mb-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold text-gray-800">Ваши аудиофайлы</h2>
+            <h2 class="text-xl font-semibold text-gray-800">Your Audio Files</h2>
             <button 
               class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md"
               :disabled="loading" 
               @click="fetchAudioSources"
             >
-              {{ loading ? 'Загрузка...' : 'Обновить' }}
+              {{ loading ? 'Loading...' : 'Refresh' }}
             </button>
           </div>
           
           <div v-if="!loading && !audioSources.length" class="text-center py-8">
-            <p>Аудиофайлов еще нет</p>
+            <p>No audio files yet</p>
           </div>
           
           <div v-else-if="loading" class="text-center py-8">
-            <p>Загрузка...</p>
+            <p>Loading...</p>
           </div>
           
           <div v-else class="space-y-6">
@@ -121,13 +121,13 @@
                     @click="handleTranscribe(audio.documentId || audio.id)"
                     :disabled="getAudioWorkStatus(audio) === 'transcribing'"
                   >
-                    {{ getAudioWorkStatus(audio) === 'transcribing' ? 'Транскрибирование...' : 'Transcribe' }}
+                    {{ getAudioWorkStatus(audio) === 'transcribing' ? 'Transcribing...' : 'Transcribe' }}
                   </button>
                   <button 
                     class="px-2 py-1 bg-red-600 text-white rounded-md"
                     @click="handleDelete(audio.documentId || audio.id)"
                   >
-                    Удалить
+                    Delete
                   </button>
                 </div>
               </div>
@@ -151,12 +151,12 @@
               </div>
               
               <div v-if="getAudioTranscription(audio)" class="mt-4 pt-3 border-t border-gray-100">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Транскрипция:</h4>
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Transcription:</h4>
                 <p class="text-gray-600 text-sm">{{ getAudioTranscription(audio) }}</p>
               </div>
               
               <div v-if="getAudioIdeas(audio)" class="mt-4 pt-3 border-t border-gray-100">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Идеи:</h4>
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Ideas:</h4>
                 <div class="text-gray-600 text-sm" v-html="getAudioIdeas(audio)"></div>
               </div>
             </div>
@@ -174,14 +174,14 @@
             class="mr-2 px-4 py-2 bg-gray-200 rounded-md"
             @click="dialogVisible = false"
           >
-            Отмена
+            Cancel
           </button>
           <button 
             class="px-4 py-2 bg-red-600 text-white rounded-md"
             @click="confirmDelete" 
             :disabled="isDeleting"
           >
-            {{ isDeleting ? 'Удаление...' : 'Удалить' }}
+            {{ isDeleting ? 'Deleting...' : 'Delete' }}
           </button>
         </div>
       </div>
@@ -329,15 +329,15 @@ export default defineComponent({
         audioForm.ideas = '';
         audioForm.files = [];
         
-        alert('Аудио успешно добавлено');
+        alert('Audio successfully added');
       } catch (error: any) {
-        console.error('Ошибка:', error);
+        console.error('Error:', error);
         if (error.response) {
           responseJson.value = JSON.stringify(error.response.data, null, 2);
         } else {
           responseJson.value = JSON.stringify(error.message, null, 2);
         }
-        alert('Ошибка при создании аудиофайла. Смотрите детали ниже.');
+        alert('Error creating audio file. See details below.');
       } finally {
         isSubmitting.value = false;
       }
@@ -348,14 +348,14 @@ export default defineComponent({
         await store.dispatch('audio/fetchAudioSources');
       } catch (error) {
         console.error(error);
-        alert('Ошибка загрузки аудиофайлов');
+        alert('Error loading audio files');
       }
     }
     
     function handleDelete(documentId: string): void {
       dialogVisible.value = true;
-      dialogConfig.title = 'Подтвердите удаление';
-      dialogConfig.message = 'Вы уверены, что хотите удалить этот аудиофайл? Это действие невозможно отменить.';
+      dialogConfig.title = 'Confirm Deletion';
+      dialogConfig.message = 'Are you sure you want to delete this audio file? This action cannot be undone.';
       currentDeleteId.value = documentId;
     }
     
@@ -366,10 +366,10 @@ export default defineComponent({
       
       try {
         await store.dispatch('audio/deleteAudioSource', currentDeleteId.value);
-        alert('Аудиофайл удален');
+        alert('Audio file deleted');
       } catch (error) {
         console.error(error);
-        alert('Ошибка при удалении аудиофайла');
+        alert('Error deleting audio file');
       } finally {
         isDeleting.value = false;
         dialogVisible.value = false;
@@ -391,9 +391,9 @@ export default defineComponent({
         // Refresh audio list to get updated transcription
         await fetchAudioSources();
         
-        alert('Транскрибирование завершено успешно');
+        alert('Transcription completed successfully');
       } catch (error: any) {
-        console.error('Ошибка при транскрибировании:', error);
+        console.error('Error transcribing:', error);
         
         if (error.response) {
           transcribeResponseJson.value = JSON.stringify(error.response.data, null, 2);
@@ -401,7 +401,7 @@ export default defineComponent({
           transcribeResponseJson.value = JSON.stringify(error.message, null, 2);
         }
         
-        alert('Ошибка при транскрибировании аудио');
+        alert('Error transcribing audio');
       }
     }
     

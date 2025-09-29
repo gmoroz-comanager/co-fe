@@ -52,7 +52,8 @@ class AudioService {
    */
   async getAudioSources(): Promise<AudioSourcesResponse> {
     try {
-      const response = await httpService.get<AudioSourcesResponse>('/audio-sources?populate=*');
+      // Sort by createdAt in descending order (newest first)
+      const response = await httpService.get<AudioSourcesResponse>('/audio-sources?populate=*&sort=createdAt:desc');
       return response.data;
     } catch (error) {
       console.error('Error fetching audio sources:', error);

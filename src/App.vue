@@ -12,20 +12,20 @@
       
       <v-btn to="/" text>
         <v-icon left>mdi-home</v-icon>
-        Главная
+        Home
       </v-btn>
       
       <v-btn to="/audio" text>
         <v-icon left>mdi-waveform</v-icon>
-        Аудио
+        Audio
       </v-btn>
       <v-btn to="/ideas" text>
         <v-icon left>mdi-lightbulb-outline</v-icon>
-        Идеи
+        Ideas
       </v-btn>
       <v-btn @click="logout" text>
         <v-icon left>mdi-logout</v-icon>
-        Выйти
+        Logout
       </v-btn>
     </v-app-bar>
     
