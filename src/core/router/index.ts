@@ -4,6 +4,7 @@ import Home from '@/views/Home.vue';
 import authRoutes from '@/modules/auth/router';
 import ideasRoutes from '@/modules/ideas/router';
 import audioRoutes from '@/modules/audio/router';
+import strategyRoutes from '@/modules/strategy/router';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -14,7 +15,8 @@ const routes: Array<RouteRecordRaw> = [
   },
   ...authRoutes,
   ...ideasRoutes,
-  ...audioRoutes
+  ...audioRoutes,
+  ...strategyRoutes
 ];
 
 const router = createRouter({
