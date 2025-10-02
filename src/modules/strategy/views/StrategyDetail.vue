@@ -4,7 +4,7 @@
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-8">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p class="mt-2 text-gray-600">Загрузка стратегии...</p>
+        <p class="mt-2 text-gray-600">Loading strategy...</p>
       </div>
 
       <!-- Error State -->
@@ -14,7 +14,7 @@
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
           </svg>
           <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Ошибка загрузки</h3>
+            <h3 class="text-sm font-medium text-red-800">Loading Error</h3>
             <p class="mt-1 text-sm text-red-700">{{ error }}</p>
           </div>
         </div>
@@ -31,10 +31,10 @@
                 class="px-3 py-1 text-sm font-medium rounded-full"
                 :class="strategy.publishedAt ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
               >
-                {{ strategy.publishedAt ? 'Опубликовано' : 'Черновик' }}
+                {{ strategy.publishedAt ? 'Published' : 'Draft' }}
               </span>
               <span class="text-sm text-gray-500">
-                Создано: {{ formatDate(strategy.createdAt) }}
+                Created: {{ formatDate(strategy.createdAt) }}
               </span>
             </div>
           </div>
@@ -44,14 +44,14 @@
               :disabled="isLoading"
               class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
-              {{ strategy.publishedAt ? 'Снять с публикации' : 'Опубликовать' }}
+              {{ strategy.publishedAt ? 'Unpublish' : 'Publish' }}
             </button>
             <button
               @click="deleteStrategy"
               :disabled="isLoading"
               class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
             >
-              Удалить
+              Delete
             </button>
           </div>
         </div>
@@ -62,19 +62,19 @@
           <div class="space-y-6">
             <!-- Basic Information -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Основная информация</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
               <div class="space-y-3">
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Тип персоны:</span>
+                  <span class="text-sm font-medium text-gray-500">Persona Type:</span>
                   <p class="text-gray-900">{{ getPersonaTypeLabel(strategy.personaType) }}</p>
                 </div>
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Целевая аудитория:</span>
+                  <span class="text-sm font-medium text-gray-500">Target Audience:</span>
                   <p class="text-gray-900">{{ strategy.targetAudience }}</p>
                 </div>
                 <div v-if="strategy.languagesArray">
-                  <span class="text-sm font-medium text-gray-500">Языки:</span>
-                  <p class="text-gray-900">{{ strategy.languagesArray }}</p>
+                  <span class="text-sm font-medium text-gray-500">Languages:</span>
+                  <p class="text-gray-900">{{ strategy.languagesArray.join(', ') }}</p>
                 </div>
               </div>
             </div>
@@ -212,37 +212,37 @@ const error = computed(() => store.getters['strategy/error']);
 
 const getPersonaTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    expert: 'Эксперт',
-    mentor: 'Наставник',
-    friend: 'Друг',
-    teacher: 'Учитель',
-    inspirer: 'Вдохновитель'
+    expert: 'Expert',
+    mentor: 'Mentor',
+    friend: 'Friend',
+    teacher: 'Teacher',
+    inspirer: 'Inspirer'
   };
   return labels[type] || type;
 };
 
 const getToneTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    calm: 'Спокойный',
-    agressive: 'Агрессивный'
+    calm: 'Calm',
+    agressive: 'Aggressive'
   };
   return labels[type] || type;
 };
 
 const getFormalityLabel = (type: string) => {
   const labels: Record<string, string> = {
-    casual: 'Неформальный',
-    professional: 'Профессиональный',
-    humorous: 'Юмористический'
+    casual: 'Casual',
+    professional: 'Professional',
+    humorous: 'Humorous'
   };
   return labels[type] || type;
 };
 
 const getSentenceLengthLabel = (type: string) => {
   const labels: Record<string, string> = {
-    short: 'Короткие',
-    medium: 'Средние',
-    long: 'Длинные'
+    short: 'Short',
+    medium: 'Medium',
+    long: 'Long'
   };
   return labels[type] || type;
 };
@@ -268,7 +268,7 @@ const togglePublish = async () => {
 const deleteStrategy = async () => {
   if (!strategy.value) return;
   
-  if (confirm('Вы уверены, что хотите удалить эту стратегию?')) {
+  if (confirm('Are you sure you want to delete this strategy?')) {
     try {
       await store.dispatch('strategy/deleteStrategy', strategy.value.id);
       router.push({ name: 'StrategiesList' });

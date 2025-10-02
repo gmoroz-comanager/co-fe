@@ -4,10 +4,10 @@
       <!-- Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">
-          Создание стратегии контента
+          Create Content Strategy
         </h1>
         <p class="text-gray-600">
-          Создайте эффективную стратегию контента за 4 простых шага
+          Create an effective content strategy in 4 simple steps
         </p>
       </div>
 
@@ -52,7 +52,7 @@
           @click="goToPreviousStep"
           class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
         >
-          Назад
+          Back
         </button>
         <div v-else></div>
         
@@ -62,7 +62,7 @@
           :disabled="!isCurrentStepComplete"
           class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          Далее
+          Next
         </button>
         <button
           v-else
@@ -70,8 +70,8 @@
           :disabled="!isCurrentStepComplete || isSaving"
           class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          <span v-if="isSaving">Сохранение...</span>
-          <span v-else>Создать стратегию</span>
+          <span v-if="isSaving">Saving...</span>
+          <span v-else>Create Strategy</span>
         </button>
       </div>
     </div>
@@ -89,20 +89,20 @@ const store = useStore();
 
 const steps = [
   {
-    title: 'Основная информация',
-    description: 'Название и аудитория'
+    title: 'Basic Information',
+    description: 'Name and audience'
   },
   {
-    title: 'Тон и стиль',
-    description: 'Настройка коммуникации'
+    title: 'Tone and Style',
+    description: 'Communication setup'
   },
   {
-    title: 'Лексика и ценности',
-    description: 'Словарь и принципы'
+    title: 'Lexicon and Values',
+    description: 'Vocabulary and principles'
   },
   {
-    title: 'Настройки и цели',
-    description: 'Финальные параметры'
+    title: 'Settings and Goals',
+    description: 'Final parameters'
   }
 ];
 

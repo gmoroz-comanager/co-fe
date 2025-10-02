@@ -5,17 +5,17 @@
       <div class="flex justify-between items-center mb-8">
         <div>
           <h1 class="text-3xl font-bold text-gray-900 mb-2">
-            Стратегии контента
+            Content Strategies
           </h1>
           <p class="text-gray-600">
-            Управляйте вашими стратегиями контента
+            Manage your content strategies
           </p>
         </div>
         <router-link
           to="/strategies/create"
           class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
-          Создать стратегию
+          Create Strategy
         </router-link>
       </div>
 
@@ -29,7 +29,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Всего стратегий</p>
+              <p class="text-sm font-medium text-gray-500">Total Strategies</p>
               <p class="text-2xl font-semibold text-gray-900">{{ totalStrategies }}</p>
             </div>
           </div>
@@ -43,7 +43,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Опубликовано</p>
+              <p class="text-sm font-medium text-gray-500">Published</p>
               <p class="text-2xl font-semibold text-gray-900">{{ publishedStrategies }}</p>
             </div>
           </div>
@@ -57,7 +57,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Черновики</p>
+              <p class="text-sm font-medium text-gray-500">Drafts</p>
               <p class="text-2xl font-semibold text-gray-900">{{ draftStrategies }}</p>
             </div>
           </div>
@@ -68,49 +68,49 @@
       <div class="bg-white p-6 rounded-lg shadow-sm border mb-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Поиск</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
             <input
               v-model="searchTerm"
               type="text"
-              placeholder="Поиск по названию..."
+              placeholder="Search by name..."
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Тип персоны</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Persona Type</label>
             <select
               v-model="personaTypeFilter"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Все типы</option>
-              <option value="expert">Эксперт</option>
-              <option value="mentor">Наставник</option>
-              <option value="friend">Друг</option>
-              <option value="teacher">Учитель</option>
-              <option value="inspirer">Вдохновитель</option>
+              <option value="">All Types</option>
+              <option value="expert">Expert</option>
+              <option value="mentor">Mentor</option>
+              <option value="friend">Friend</option>
+              <option value="teacher">Teacher</option>
+              <option value="inspirer">Inspirer</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Тон</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tone</label>
             <select
               v-model="toneTypeFilter"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Все тона</option>
-              <option value="calm">Спокойный</option>
-              <option value="agressive">Агрессивный</option>
+              <option value="">All Tones</option>
+              <option value="calm">Calm</option>
+              <option value="agressive">Aggressive</option>
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Формальность</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Formality</label>
             <select
               v-model="formalityFilter"
               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Все уровни</option>
-              <option value="casual">Неформальный</option>
-              <option value="professional">Профессиональный</option>
-              <option value="humorous">Юмористический</option>
+              <option value="">All Levels</option>
+              <option value="casual">Casual</option>
+              <option value="professional">Professional</option>
+              <option value="humorous">Humorous</option>
             </select>
           </div>
         </div>
@@ -119,7 +119,7 @@
       <!-- Loading State -->
       <div v-if="isLoading" class="text-center py-8">
         <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p class="mt-2 text-gray-600">Загрузка стратегий...</p>
+        <p class="mt-2 text-gray-600">Loading strategies...</p>
       </div>
 
       <!-- Error State -->
@@ -129,7 +129,7 @@
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
           </svg>
           <div class="ml-3">
-            <h3 class="text-sm font-medium text-red-800">Ошибка загрузки</h3>
+            <h3 class="text-sm font-medium text-red-800">Loading Error</h3>
             <p class="mt-1 text-sm text-red-700">{{ error }}</p>
           </div>
         </div>
@@ -150,20 +150,20 @@
                 class="px-2 py-1 text-xs font-medium rounded-full"
                 :class="strategy.publishedAt ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'"
               >
-                {{ strategy.publishedAt ? 'Опубликовано' : 'Черновик' }}
+                {{ strategy.publishedAt ? 'Published' : 'Draft' }}
               </span>
             </div>
             
             <div class="space-y-2 text-sm text-gray-600">
-              <p><span class="font-medium">Персона:</span> {{ getPersonaTypeLabel(strategy.personaType) }}</p>
-              <p><span class="font-medium">Тон:</span> {{ getToneTypeLabel(strategy.toneType) }}</p>
-              <p><span class="font-medium">Формальность:</span> {{ getFormalityLabel(strategy.formality) }}</p>
-              <p><span class="font-medium">Постов в месяц:</span> {{ strategy.targetPostCount }}</p>
+              <p><span class="font-medium">Persona:</span> {{ getPersonaTypeLabel(strategy.personaType) }}</p>
+              <p><span class="font-medium">Tone:</span> {{ getToneTypeLabel(strategy.toneType) }}</p>
+              <p><span class="font-medium">Formality:</span> {{ getFormalityLabel(strategy.formality) }}</p>
+              <p><span class="font-medium">Posts per month:</span> {{ strategy.targetPostCount }}</p>
             </div>
 
             <div class="mt-4 pt-4 border-t border-gray-200">
               <p class="text-xs text-gray-500">
-                Создано: {{ formatDate(strategy.createdAt) }}
+                Created: {{ formatDate(strategy.createdAt) }}
               </p>
             </div>
           </div>
@@ -175,14 +175,14 @@
         <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
         </svg>
-        <h3 class="mt-2 text-sm font-medium text-gray-900">Нет стратегий</h3>
-        <p class="mt-1 text-sm text-gray-500">Начните с создания вашей первой стратегии контента.</p>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No Strategies</h3>
+        <p class="mt-1 text-sm text-gray-500">Start by creating your first content strategy.</p>
         <div class="mt-6">
           <router-link
             to="/strategies/create"
             class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
-            Создать стратегию
+            Create Strategy
           </router-link>
         </div>
       </div>
@@ -235,28 +235,28 @@ const goToStrategy = (id: number) => {
 
 const getPersonaTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    expert: 'Эксперт',
-    mentor: 'Наставник',
-    friend: 'Друг',
-    teacher: 'Учитель',
-    inspirer: 'Вдохновитель'
+    expert: 'Expert',
+    mentor: 'Mentor',
+    friend: 'Friend',
+    teacher: 'Teacher',
+    inspirer: 'Inspirer'
   };
   return labels[type] || type;
 };
 
 const getToneTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
-    calm: 'Спокойный',
-    agressive: 'Агрессивный'
+    calm: 'Calm',
+    agressive: 'Aggressive'
   };
   return labels[type] || type;
 };
 
 const getFormalityLabel = (type: string) => {
   const labels: Record<string, string> = {
-    casual: 'Неформальный',
-    professional: 'Профессиональный',
-    humorous: 'Юмористический'
+    casual: 'Casual',
+    professional: 'Professional',
+    humorous: 'Humorous'
   };
   return labels[type] || type;
 };

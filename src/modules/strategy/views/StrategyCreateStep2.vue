@@ -2,10 +2,10 @@
   <div class="strategy-create-step2">
     <div class="mb-6">
       <h2 class="text-2xl font-semibold text-gray-900 mb-2">
-        Тон и стиль коммуникации
+        Tone and Communication Style
       </h2>
       <p class="text-gray-600">
-        Определите, как вы хотите общаться с аудиторией
+        Define how you want to communicate with your audience
       </p>
     </div>
 
@@ -13,7 +13,7 @@
       <!-- Tone Type -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-3">
-          Тип тона *
+          Tone Type *
         </label>
         <div class="grid grid-cols-2 gap-4">
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.toneType === 'calm' }">
@@ -24,8 +24,8 @@
               class="sr-only"
             />
             <div class="flex-1">
-              <div class="font-medium text-gray-900">Спокойный</div>
-              <div class="text-sm text-gray-500">Мягкий, расслабленный тон</div>
+              <div class="font-medium text-gray-900">Calm</div>
+              <div class="text-sm text-gray-500">Soft, relaxed tone</div>
             </div>
           </label>
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.toneType === 'agressive' }">
@@ -36,8 +36,8 @@
               class="sr-only"
             />
             <div class="flex-1">
-              <div class="font-medium text-gray-900">Агрессивный</div>
-              <div class="text-sm text-gray-500">Энергичный, напористый тон</div>
+              <div class="font-medium text-gray-900">Aggressive</div>
+              <div class="text-sm text-gray-500">Energetic, assertive tone</div>
             </div>
           </label>
         </div>
@@ -46,7 +46,7 @@
       <!-- Formality -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-3">
-          Уровень формальности *
+          Formality Level *
         </label>
         <div class="grid grid-cols-3 gap-4">
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.formality === 'casual' }">
@@ -57,8 +57,8 @@
               class="sr-only"
             />
             <div class="flex-1 text-center">
-              <div class="font-medium text-gray-900">Неформальный</div>
-              <div class="text-sm text-gray-500">Дружелюбно, просто</div>
+              <div class="font-medium text-gray-900">Casual</div>
+              <div class="text-sm text-gray-500">Friendly, simple</div>
             </div>
           </label>
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.formality === 'professional' }">
@@ -69,8 +69,8 @@
               class="sr-only"
             />
             <div class="flex-1 text-center">
-              <div class="font-medium text-gray-900">Профессиональный</div>
-              <div class="text-sm text-gray-500">Деловито, серьезно</div>
+              <div class="font-medium text-gray-900">Professional</div>
+              <div class="text-sm text-gray-500">Business-like, serious</div>
             </div>
           </label>
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.formality === 'humorous' }">
@@ -81,8 +81,8 @@
               class="sr-only"
             />
             <div class="flex-1 text-center">
-              <div class="font-medium text-gray-900">Юмористический</div>
-              <div class="text-sm text-gray-500">С юмором, легко</div>
+              <div class="font-medium text-gray-900">Humorous</div>
+              <div class="text-sm text-gray-500">With humor, light</div>
             </div>
           </label>
         </div>
@@ -91,7 +91,7 @@
       <!-- Sentence Length -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-3">
-          Длина предложений *
+          Sentence Length *
         </label>
         <div class="grid grid-cols-3 gap-4">
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.sentenceLength === 'short' }">
@@ -102,8 +102,8 @@
               class="sr-only"
             />
             <div class="flex-1 text-center">
-              <div class="font-medium text-gray-900">Короткие</div>
-              <div class="text-sm text-gray-500">Лаконично, по делу</div>
+              <div class="font-medium text-gray-900">Short</div>
+              <div class="text-sm text-gray-500">Concise, to the point</div>
             </div>
           </label>
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.sentenceLength === 'medium' }">
@@ -114,8 +114,8 @@
               class="sr-only"
             />
             <div class="flex-1 text-center">
-              <div class="font-medium text-gray-900">Средние</div>
-              <div class="text-sm text-gray-500">Сбалансированно</div>
+              <div class="font-medium text-gray-900">Medium</div>
+              <div class="text-sm text-gray-500">Balanced</div>
             </div>
           </label>
           <label class="flex items-center p-4 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" :class="{ 'border-blue-500 bg-blue-50': formData.sentenceLength === 'long' }">
@@ -126,8 +126,8 @@
               class="sr-only"
             />
             <div class="flex-1 text-center">
-              <div class="font-medium text-gray-900">Длинные</div>
-              <div class="text-sm text-gray-500">Подробно, развернуто</div>
+              <div class="font-medium text-gray-900">Long</div>
+              <div class="text-sm text-gray-500">Detailed, extensive</div>
             </div>
           </label>
         </div>
@@ -136,7 +136,7 @@
       <!-- Humor Amount -->
       <div>
         <label for="humorAmount" class="block text-sm font-medium text-gray-700 mb-2">
-          Количество юмора (0-10)
+          Humor Amount (0-10)
         </label>
         <div class="flex items-center space-x-4">
           <input
@@ -150,8 +150,8 @@
           <span class="text-lg font-medium text-gray-900 w-8">{{ formData.humorAmount }}</span>
         </div>
         <div class="flex justify-between text-xs text-gray-500 mt-1">
-          <span>Серьезно</span>
-          <span>Очень смешно</span>
+          <span>Serious</span>
+          <span>Very Funny</span>
         </div>
       </div>
     </form>

@@ -4,7 +4,7 @@ export interface ContentStrategyAttributes {
   name: string;
   personaType: string;
   targetAudience: string;
-  languagesArray: string;
+  languagesArray: string[];
   toneType: 'calm' | 'agressive';
   formality: 'casual' | 'professional' | 'humorous';
   sentenceLength: 'short' | 'medium' | 'long';
@@ -38,7 +38,7 @@ export interface ContentStrategy {
   name: string;
   personaType: string;
   targetAudience: string;
-  languagesArray: string;
+  languagesArray: string[];
   toneType: 'calm' | 'agressive';
   formality: 'casual' | 'professional' | 'humorous';
   sentenceLength: 'short' | 'medium' | 'long';
@@ -99,7 +99,7 @@ export interface StrategyCreationData {
     name: string;
     personaType: string;
     targetAudience: string;
-    languagesArray: string;
+    languagesArray: string[];
   };
   step2: {
     toneType: 'calm' | 'agressive';

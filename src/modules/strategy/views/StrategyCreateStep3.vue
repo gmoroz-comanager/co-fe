@@ -2,10 +2,10 @@
   <div class="strategy-create-step3">
     <div class="mb-6">
       <h2 class="text-2xl font-semibold text-gray-900 mb-2">
-        Лексика и ценности
+        Lexicon and Values
       </h2>
       <p class="text-gray-600">
-        Определите словарь и принципы вашего бренда
+        Define your brand's vocabulary and principles
       </p>
     </div>
 
@@ -13,7 +13,7 @@
       <!-- Preferred Lexicon -->
       <div>
         <label for="lexiconPreferred" class="block text-sm font-medium text-gray-700 mb-2">
-          Предпочитаемые слова и выражения *
+          Preferred Words and Expressions *
         </label>
         <textarea
           id="lexiconPreferred"
@@ -21,34 +21,34 @@
           required
           rows="4"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Слова и фразы, которые должны использоваться в контенте..."
+          placeholder="Words and phrases that should be used in content..."
         ></textarea>
         <p class="text-sm text-gray-500 mt-1">
-          Например: инновации, качество, надежность, эффективность
+          e.g., innovation, quality, reliability, efficiency
         </p>
       </div>
 
       <!-- Avoid Lexicon -->
       <div>
         <label for="lexiconAvoid" class="block text-sm font-medium text-gray-700 mb-2">
-          Слова и выражения, которых следует избегать
+          Words and Expressions to Avoid
         </label>
         <textarea
           id="lexiconAvoid"
           v-model="formData.lexiconAvoid"
           rows="3"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Слова и фразы, которые не должны использоваться..."
+          placeholder="Words and phrases that should not be used..."
         ></textarea>
         <p class="text-sm text-gray-500 mt-1">
-          Например: дешевый, плохой, неудачный
+          e.g., cheap, bad, unsuccessful
         </p>
       </div>
 
       <!-- Core Values -->
       <div>
         <label for="coreValues" class="block text-sm font-medium text-gray-700 mb-2">
-          Основные ценности бренда *
+          Core Brand Values *
         </label>
         <textarea
           id="coreValues"
@@ -56,27 +56,27 @@
           required
           rows="4"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Опишите основные ценности и принципы вашего бренда..."
+          placeholder="Describe your brand's core values and principles..."
         ></textarea>
         <p class="text-sm text-gray-500 mt-1">
-          Например: честность, прозрачность, инновации, забота о клиентах
+          e.g., honesty, transparency, innovation, customer care
         </p>
       </div>
 
       <!-- Topics to Avoid -->
       <div>
         <label for="avoidTopics" class="block text-sm font-medium text-gray-700 mb-2">
-          Темы, которых следует избегать
+          Topics to Avoid
         </label>
         <textarea
           id="avoidTopics"
           v-model="formData.avoidTopics"
           rows="3"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Темы, которые не должны освещаться в контенте..."
+          placeholder="Topics that should not be covered in content..."
         ></textarea>
         <p class="text-sm text-gray-500 mt-1">
-          Например: политика, религия, спорные темы
+          e.g., politics, religion, controversial topics
         </p>
       </div>
     </form>

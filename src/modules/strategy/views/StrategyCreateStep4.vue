@@ -2,10 +2,10 @@
   <div class="strategy-create-step4">
     <div class="mb-6">
       <h2 class="text-2xl font-semibold text-gray-900 mb-2">
-        Настройки и цели
+        Settings and Goals
       </h2>
       <p class="text-gray-600">
-        Финальные параметры и цели вашей стратегии
+        Final parameters and goals for your strategy
       </p>
     </div>
 
@@ -13,7 +13,7 @@
       <!-- Target Post Count -->
       <div>
         <label for="targetPostCount" class="block text-sm font-medium text-gray-700 mb-2">
-          Целевое количество постов в месяц *
+          Target Number of Posts per Month *
         </label>
         <input
           id="targetPostCount"
@@ -23,45 +23,45 @@
           max="100"
           required
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Например: 30"
+          placeholder="e.g., 30"
         />
       </div>
 
       <!-- Social Media Channels -->
       <div>
         <label for="smmChannelsArray" class="block text-sm font-medium text-gray-700 mb-2">
-          Социальные сети и каналы
+          Social Media Channels
         </label>
         <input
           id="smmChannelsArray"
           v-model="formData.smmChannelsArray"
           type="text"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Например: Instagram, Facebook, LinkedIn, YouTube"
+          placeholder="e.g., Instagram, Facebook, LinkedIn, YouTube"
         />
         <p class="text-sm text-gray-500 mt-1">
-          Укажите каналы через запятую
+          Specify channels separated by commas
         </p>
       </div>
 
       <!-- Call to Action Formats -->
       <div>
         <label for="callToActionFormatsArray" class="block text-sm font-medium text-gray-700 mb-2">
-          Форматы призывов к действию
+          Call to Action Formats
         </label>
         <textarea
           id="callToActionFormatsArray"
           v-model="formData.callToActionFormatsArray"
           rows="3"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Например: 'Узнать больше', 'Скачать', 'Подписаться', 'Связаться с нами'"
+          placeholder="e.g., 'Learn More', 'Download', 'Subscribe', 'Contact Us'"
         ></textarea>
       </div>
 
       <!-- Main Goals -->
       <div>
         <label for="mainGoalsArray" class="block text-sm font-medium text-gray-700 mb-2">
-          Основные цели стратегии *
+          Main Strategy Goals *
         </label>
         <textarea
           id="mainGoalsArray"
@@ -69,24 +69,24 @@
           required
           rows="4"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Опишите основные цели вашей контент-стратегии..."
+          placeholder="Describe the main goals of your content strategy..."
         ></textarea>
         <p class="text-sm text-gray-500 mt-1">
-          Например: увеличение узнаваемости бренда, привлечение новых клиентов, повышение лояльности
+          e.g., increase brand awareness, attract new customers, improve loyalty
         </p>
       </div>
 
       <!-- User Examples -->
       <div>
         <label for="userExamples" class="block text-sm font-medium text-gray-700 mb-2">
-          Примеры контента от пользователей
+          User Content Examples
         </label>
         <textarea
           id="userExamples"
           v-model="formData.userExamples"
           rows="3"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Примеры постов, которые вам нравятся или которые вы хотите использовать как образец..."
+          placeholder="Examples of posts you like or want to use as templates..."
         ></textarea>
       </div>
 
@@ -100,7 +100,7 @@
             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <label for="useEmodji" class="ml-2 block text-sm text-gray-900">
-            Использовать эмодзи
+            Use Emojis
           </label>
         </div>
 
@@ -112,7 +112,7 @@
             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <label for="useAudienceQuestions" class="ml-2 block text-sm text-gray-900">
-            Задавать вопросы аудитории
+            Ask Audience Questions
           </label>
         </div>
 
@@ -124,7 +124,7 @@
             class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
           <label for="useSlang" class="ml-2 block text-sm text-gray-900">
-            Использовать сленг
+            Use Slang
           </label>
         </div>
       </div>

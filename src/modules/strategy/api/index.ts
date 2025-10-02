@@ -8,3 +8,5 @@ export {
   type StrategyCreationData
 } from './strategy.service';
 
+export { languages, type Language } from './languages';
+
