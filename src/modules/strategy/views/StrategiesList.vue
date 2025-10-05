@@ -141,7 +141,7 @@
           v-for="strategy in strategies"
           :key="strategy.id"
           class="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow cursor-pointer"
-          @click="goToStrategy(strategy.id)"
+          @click="goToStrategy(strategy.documentId)"
         >
           <div class="p-6">
             <div class="flex items-start justify-between mb-4">

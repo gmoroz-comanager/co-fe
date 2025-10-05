@@ -40,13 +40,6 @@
           </div>
           <div class="flex space-x-3">
             <button
-              @click="togglePublish"
-              :disabled="isLoading"
-              class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-            >
-              {{ strategy.publishedAt ? 'Unpublish' : 'Publish' }}
-            </button>
-            <button
               @click="deleteStrategy"
               :disabled="isLoading"
               class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50"
@@ -74,7 +67,7 @@
                 </div>
                 <div v-if="strategy.languagesArray">
                   <span class="text-sm font-medium text-gray-500">Languages:</span>
-                  <p class="text-gray-900">{{ strategy.languagesArray.join(', ') }}</p>
+                  <p class="text-gray-900">{{ strategy.languagesArray }}</p>
                 </div>
               </div>
             </div>
@@ -251,26 +244,13 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('ru-RU');
 };
 
-const togglePublish = async () => {
-  if (!strategy.value) return;
-  
-  try {
-    if (strategy.value.publishedAt) {
-      await store.dispatch('strategy/unpublishStrategy', strategy.value.id);
-    } else {
-      await store.dispatch('strategy/publishStrategy', strategy.value.id);
-    }
-  } catch (error) {
-    console.error('Error toggling publish status:', error);
-  }
-};
 
 const deleteStrategy = async () => {
   if (!strategy.value) return;
   
   if (confirm('Are you sure you want to delete this strategy?')) {
     try {
-      await store.dispatch('strategy/deleteStrategy', strategy.value.id);
+      await store.dispatch('strategy/deleteStrategy', strategy.value.documentId);
       router.push({ name: 'StrategiesList' });
     } catch (error) {
       console.error('Error deleting strategy:', error);

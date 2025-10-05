@@ -197,8 +197,16 @@ class ContentStrategyService {
    * Create a new content strategy
    */
   async createStrategy(data: Partial<ContentStrategyAttributes>): Promise<ContentStrategyResponse> {
+    // Преобразуем languagesArray из массива в строку с запятыми для бэкенда
+    const transformedData = {
+      ...data,
+      languagesArray: Array.isArray(data.languagesArray) 
+        ? data.languagesArray.join(',') 
+        : data.languagesArray
+    };
+
     const response = await httpService.post<ContentStrategyResponse>('/content-strategies', {
-      data: data
+      data: transformedData
     });
     return response.data;
   }
@@ -207,8 +215,16 @@ class ContentStrategyService {
    * Update an existing content strategy
    */
   async updateStrategy(id: string | number, data: Partial<ContentStrategyAttributes>): Promise<ContentStrategyResponse> {
+    // Преобразуем languagesArray из массива в строку с запятыми для бэкенда
+    const transformedData = {
+      ...data,
+      languagesArray: Array.isArray(data.languagesArray) 
+        ? data.languagesArray.join(',') 
+        : data.languagesArray
+    };
+
     const response = await httpService.put<ContentStrategyResponse>(`/content-strategies/${id}`, {
-      data: data
+      data: transformedData
     });
     return response.data;
   }
@@ -255,4 +271,3 @@ class ContentStrategyService {
 
 // Create singleton instance
 export const contentStrategyService = new ContentStrategyService();
-
