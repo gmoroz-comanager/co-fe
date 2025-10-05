@@ -61,16 +61,16 @@
                     <template v-slot:prepend>
                       <v-badge
                         dot
-                        :color="getStatusColor(idea.attributes.work_status)"
+                        :color="getStatusColor(idea.work_status)"
                       ></v-badge>
                     </template>
                     
                     <v-list-item-title>
-                      {{ idea.attributes.title }}
+                      {{ idea.title }}
                     </v-list-item-title>
                     
                     <v-list-item-subtitle>
-                      {{ formatDate(idea.attributes.createdAt) }}
+                      {{ formatDate(idea.createdAt) }}
                     </v-list-item-subtitle>
                     
                     <template v-slot:append>

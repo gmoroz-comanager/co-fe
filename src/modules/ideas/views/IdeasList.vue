@@ -159,31 +159,31 @@
         lg="4"
       >
         <v-card
-          :to="{ name: 'IdeaDetail', params: { id: idea.id } }"
+          :to="{ name: 'IdeaDetail', params: { id: idea.documentId } }"
           height="100%"
           class="d-flex flex-column"
         >
           <v-card-title class="d-flex align-center">
             <v-badge
-              :color="getStatusColor(idea.attributes.work_status)"
+              :color="getStatusColor(idea.work_status)"
               dot
               class="mr-2"
             ></v-badge>
-            {{ idea.attributes.title }}
+            {{ idea.title }}
           </v-card-title>
           
           <v-card-subtitle>
-            {{ formatDate(idea.attributes.createdAt) }}
+            {{ formatDate(idea.createdAt) }}
           </v-card-subtitle>
           
           <v-card-text class="flex-grow-1">
-            <div v-if="idea.attributes.question" class="mb-2 text-truncate">
-              <strong>Question:</strong> {{ idea.attributes.question }}
+            <div v-if="idea.question" class="mb-2 text-truncate">
+              <strong>Question:</strong> {{ idea.question }}
             </div>
             
-            <div v-if="idea.attributes.tags" class="mt-2">
+            <div v-if="idea.tags" class="mt-2">
               <v-chip
-                v-for="(tag, index) in parseTags(idea.attributes.tags)"
+                v-for="(tag, index) in parseTags(idea.tags)"
                 :key="index"
                 size="x-small"
                 class="mr-1 mb-1"

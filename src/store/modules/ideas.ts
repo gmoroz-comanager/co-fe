@@ -30,13 +30,9 @@ interface IdeaAttributes {
   };
 }
 
-interface Idea {
-  id: number;
-  attributes: IdeaAttributes;
-}
 
 interface IdeasState {
-  ideas: Idea[];
+  ideas: IdeaAttributes[];
   totalIdeas: number;
   newIdeas: number;
   loading: boolean;
@@ -63,7 +59,7 @@ export default {
   },
   
   mutations: {
-    SET_IDEAS(state: IdeasState, ideas: Idea[]) {
+    SET_IDEAS(state: IdeasState, ideas: IdeaAttributes[]) {
       state.ideas = ideas;
     },
     SET_TOTAL_IDEAS(state: IdeasState, total: number) {
@@ -100,8 +96,8 @@ export default {
         commit('SET_TOTAL_IDEAS', ideas.length);
         
         // Count ideas with 'new' status
-        const newIdeas = ideas.filter((idea: Idea) => 
-          idea.attributes.work_status === 'new'
+        const newIdeas = ideas.filter((idea: IdeaAttributes) =>
+          idea.work_status === 'new'
         ).length;
         
         commit('SET_NEW_IDEAS', newIdeas);

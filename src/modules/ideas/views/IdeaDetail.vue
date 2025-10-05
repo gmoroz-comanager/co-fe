@@ -15,43 +15,43 @@
         <v-col cols="12">
           <v-card>
             <v-card-title class="text-h4">
-              {{ idea.attributes.title }}
+              {{ idea.title }}
             </v-card-title>
             
             <v-card-subtitle>
               <v-chip
-                :color="getStatusColor(idea.attributes.work_status)"
+                :color="getStatusColor(idea.work_status)"
                 class="mr-2"
                 size="small"
               >
-                {{ idea.attributes.work_status }}
+                {{ idea.work_status }}
               </v-chip>
               <span class="text-caption">
-                Created: {{ formatDate(idea.attributes.createdAt) }}
+                Created: {{ formatDate(idea.createdAt) }}
               </span>
             </v-card-subtitle>
             
             <v-card-text>
-              <div v-if="idea.attributes.question" class="mb-4">
+              <div v-if="idea.question" class="mb-4">
                 <div class="text-h6">Question:</div>
-                <div>{{ idea.attributes.question }}</div>
+                <div>{{ idea.question }}</div>
               </div>
               
-              <div v-if="idea.attributes.body" class="mb-4">
+              <div v-if="idea.body" class="mb-4">
                 <div class="text-h6">Content:</div>
-                <div v-html="renderBlocks(idea.attributes.body)"></div>
+                <div v-html="renderBlocks(idea.body)"></div>
               </div>
               
-              <div v-if="idea.attributes.polishedBody" class="mb-4">
+              <div v-if="idea.polishedBody" class="mb-4">
                 <div class="text-h6">Polished Content:</div>
-                <div v-html="renderBlocks(idea.attributes.polishedBody)"></div>
+                <div v-html="renderBlocks(idea.polishedBody)"></div>
               </div>
               
-              <div v-if="idea.attributes.tags" class="mb-4">
+              <div v-if="idea.tags" class="mb-4">
                 <div class="text-h6">Tags:</div>
                 <div>
                   <v-chip
-                    v-for="(tag, index) in parseTags(idea.attributes.tags)"
+                    v-for="(tag, index) in parseTags(idea.tags)"
                     :key="index"
                     class="mr-2 mb-2"
                     size="small"
@@ -61,7 +61,7 @@
                 </div>
               </div>
               
-              <div v-if="idea.attributes.audio_source && idea.attributes.audio_source.data" class="mb-4">
+              <div v-if="idea.audio_source && idea.audio_source.data" class="mb-4">
                 <div class="text-h6">Related Audio:</div>
                 <v-btn
                   color="primary"
@@ -156,16 +156,8 @@ export default {
       if (!blocks) return '';
       
       // Simple rendering of blocks content - in a real app you'd use a proper blocks renderer
-      let html = '';
-      blocks.forEach(block => {
-        if (block.type === 'paragraph') {
-          html += `<p>${block.children.map(child => child.text).join('')}</p>`;
-        } else if (block.type === 'heading') {
-          const level = block.level || 3;
-          html += `<h${level}>${block.children.map(child => child.text).join('')}</h${level}>`;
-        }
-      });
-      
+      let html = `<p>${ blocks}</p>`;
+
       return html;
     };
     
