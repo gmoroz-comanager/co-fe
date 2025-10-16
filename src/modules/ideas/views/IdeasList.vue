@@ -159,9 +159,10 @@
         lg="4"
       >
         <v-card
-          :to="{ name: 'IdeaDetail', params: { id: idea.documentId } }"
+          :to="{ name: 'IdeaDetail', params: { id: idea.documentId || idea.id } }"
           height="100%"
           class="d-flex flex-column"
+          hover
         >
           <v-card-title class="d-flex align-center">
             <v-badge
@@ -169,18 +170,48 @@
               dot
               class="mr-2"
             ></v-badge>
-            {{ idea.title }}
+            <span class="text-truncate">{{ idea.title }}</span>
           </v-card-title>
           
-          <v-card-subtitle>
-            {{ formatDate(idea.createdAt) }}
+          <v-card-subtitle class="d-flex align-center">
+            <span>{{ formatDate(idea.createdAt) }}</span>
+            <v-spacer></v-spacer>
+            <v-chip
+              v-if="idea.polishedBody"
+              size="x-small"
+              color="purple"
+              variant="outlined"
+            >
+              <v-icon size="x-small" class="mr-1">mdi-sparkles</v-icon>
+              Polished
+            </v-chip>
           </v-card-subtitle>
           
           <v-card-text class="flex-grow-1">
-            <div v-if="idea.question" class="mb-2 text-truncate">
-              <strong>Question:</strong> {{ idea.question }}
+            <!-- Brand Facet -->
+            <div v-if="idea.brandFacet" class="mb-2">
+              <v-chip size="x-small" color="purple" variant="tonal" class="mr-1">
+                {{ idea.brandFacet }}
+              </v-chip>
+            </div>
+
+            <!-- Recommended Channel -->
+            <div v-if="idea.recommendedChannel" class="mb-2">
+              <v-icon size="x-small" class="mr-1">mdi-pound</v-icon>
+              <span class="text-caption">{{ idea.recommendedChannel }}</span>
             </div>
             
+            <!-- Hook -->
+            <div v-if="idea.question" class="mb-2 text-truncate">
+              <strong>Hook:</strong> {{ idea.question }}
+            </div>
+
+            <!-- Short description -->
+            <div v-if="idea.body" class="mb-2 text-body-2 text-grey-darken-1">
+              {{ truncateText(idea.body, 100) }}
+            </div>
+            
+            <!-- Tags -->
             <div v-if="idea.tags" class="mt-2">
               <v-chip
                 v-for="(tag, index) in parseTags(idea.tags)"
@@ -198,9 +229,11 @@
             <v-btn
               variant="text"
               color="primary"
-              :to="{ name: 'IdeaDetail', params: { id: idea.id } }"
+              size="small"
+              :to="{ name: 'IdeaDetail', params: { id: idea.documentId || idea.id } }"
             >
               View Details
+              <v-icon end>mdi-arrow-right</v-icon>
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -365,6 +398,12 @@ export default defineComponent({
       if (!tagsString) return [];
       return tagsString.split(',').map(tag => tag.trim());
     };
+
+    const truncateText = (text: string | undefined, maxLength: number) => {
+      if (!text) return '';
+      if (text.length <= maxLength) return text;
+      return text.substring(0, maxLength) + '...';
+    };
     
     // Watch for page changes from pagination component
     watch(currentPage, (newPage) => {
@@ -409,7 +448,8 @@ export default defineComponent({
       clearEndDate,
       formatDate,
       getStatusColor,
-      parseTags
+      parseTags,
+      truncateText
     };
   }
 });

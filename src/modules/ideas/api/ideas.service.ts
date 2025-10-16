@@ -1,36 +1,45 @@
 import { httpService } from '@/core/api';
 
-export interface IdeaAttributes {
+// Strapi v5 returns data directly without attributes wrapper
+export interface Idea {
+  id: number;
+  documentId: string;
   title: string;
   question?: string;
-  body?: any; // Using 'any' for blocks content
+  body?: any;
   polishedBody?: any;
   tags?: string;
   work_status?: 'new' | 'readyToPublish' | 'published';
   createdAt: string;
   updatedAt: string;
+  
+  // Extended fields
+  brandFacet?: string;
+  recommendedChannel?: string;
+  alternativeTitles?: string[];
+  draftText?: string;
+  visualDescription?: string;
+  announcementText?: string;
+  
+  // Relations (Strapi v5 format)
   postMedia?: {
-    data: {
-      id: number;
-      attributes: {
-        name: string;
-        url: string;
-        mime: string;
-        size: number;
-      }
-    } | null;
-  };
+    id: number;
+    name: string;
+    url: string;
+    mime: string;
+    size: number;
+  } | null;
   audio_source?: {
-    data: {
-      id: number;
-      attributes: any;
-    } | null;
-  };
-}
-
-export interface Idea {
-  id: number;
-  attributes: IdeaAttributes;
+    id: number;
+    documentId: string;
+    [key: string]: any;
+  } | null;
+  content_strategy?: {
+    id: number;
+    documentId: string;
+    name?: string;
+    [key: string]: any;
+  } | null;
 }
 
 export interface IdeasResponse {
@@ -128,7 +137,7 @@ class IdeasService {
   /**
    * Create a new idea
    */
-  async createIdea(data: Partial<IdeaAttributes>): Promise<IdeaResponse> {
+  async createIdea(data: Partial<Idea>): Promise<IdeaResponse> {
     const response = await httpService.post<IdeaResponse>('/ideas', {
       data: data
     });
@@ -138,7 +147,7 @@ class IdeasService {
   /**
    * Update an existing idea
    */
-  async updateIdea(id: string | number, data: Partial<IdeaAttributes>): Promise<IdeaResponse> {
+  async updateIdea(id: string | number, data: Partial<Idea>): Promise<IdeaResponse> {
     const response = await httpService.put<IdeaResponse>(`/ideas/${id}`, {
       data: data
     });
@@ -165,6 +174,38 @@ class IdeasService {
       total: totalResponse.data.meta.pagination.total,
       new: newResponse.data.meta.pagination.total
     };
+  }
+
+  /**
+   * Like an idea
+   */
+  async likeIdea(id: string | number): Promise<{ ok: boolean }> {
+    const response = await httpService.post<{ ok: boolean }>(`/ideas/${id}/like`);
+    return response.data;
+  }
+
+  /**
+   * Dislike an idea
+   */
+  async dislikeIdea(id: string | number): Promise<{ ok: boolean }> {
+    const response = await httpService.post<{ ok: boolean }>(`/ideas/${id}/dislike`);
+    return response.data;
+  }
+
+  /**
+   * Polish an idea (expand it using AI with transcription memory)
+   */
+  async polishIdea(id: string | number): Promise<{
+    success: boolean;
+    polished: Idea;
+    usedContext: string[];
+  }> {
+    const response = await httpService.post<{
+      success: boolean;
+      polished: Idea;
+      usedContext: string[];
+    }>(`/ideas/${id}/polish`);
+    return response.data;
   }
 }
 

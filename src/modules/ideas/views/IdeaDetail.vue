@@ -32,21 +32,79 @@
             </v-card-subtitle>
             
             <v-card-text>
+              <!-- Alternative Titles -->
+              <div v-if="idea.alternativeTitles && idea.alternativeTitles.length > 0" class="mb-4">
+                <div class="text-h6 mb-2">Alternative Titles:</div>
+                <v-chip
+                  v-for="(title, index) in idea.alternativeTitles"
+                  :key="index"
+                  class="mr-2 mb-2"
+                  variant="outlined"
+                  color="primary"
+                >
+                  {{ title }}
+                </v-chip>
+              </div>
+
+              <!-- Brand Facet & Channel -->
+              <v-row v-if="idea.brandFacet || idea.recommendedChannel" class="mb-4">
+                <v-col v-if="idea.brandFacet" cols="12" md="6">
+                  <div class="text-subtitle-2 text-grey">Brand Facet:</div>
+                  <div class="text-body-1">{{ idea.brandFacet }}</div>
+                </v-col>
+                <v-col v-if="idea.recommendedChannel" cols="12" md="6">
+                  <div class="text-subtitle-2 text-grey">Recommended Channel:</div>
+                  <div class="text-body-1">{{ idea.recommendedChannel }}</div>
+                </v-col>
+              </v-row>
+              
+              <!-- Hook/Question -->
               <div v-if="idea.question" class="mb-4">
-                <div class="text-h6">Question:</div>
-                <div>{{ idea.question }}</div>
+                <div class="text-h6">Hook:</div>
+                <div class="text-body-1">{{ idea.question }}</div>
               </div>
               
+              <!-- Short Description -->
               <div v-if="idea.body" class="mb-4">
-                <div class="text-h6">Content:</div>
-                <div v-html="renderBlocks(idea.body)"></div>
+                <div class="text-h6">Description:</div>
+                <div class="text-body-1">{{ idea.body }}</div>
               </div>
               
+              <!-- Draft Text (Full Content) -->
+              <div v-if="idea.draftText" class="mb-4">
+                <div class="text-h6">Draft Text:</div>
+                <v-card variant="outlined" class="pa-4">
+                  <div class="text-body-1" style="white-space: pre-wrap;">{{ idea.draftText }}</div>
+                </v-card>
+              </div>
+
+              <!-- Visual Description -->
+              <div v-if="idea.visualDescription" class="mb-4">
+                <div class="text-h6">Visual Description:</div>
+                <v-card variant="outlined" class="pa-3">
+                  <v-icon class="mr-2" color="purple">mdi-image-outline</v-icon>
+                  <span class="text-body-2">{{ idea.visualDescription }}</span>
+                </v-card>
+              </div>
+
+              <!-- Announcement Text -->
+              <div v-if="idea.announcementText" class="mb-4">
+                <div class="text-h6">LinkedIn Announcement:</div>
+                <v-card variant="outlined" class="pa-3">
+                  <v-icon class="mr-2" color="blue">mdi-linkedin</v-icon>
+                  <span class="text-body-2">{{ idea.announcementText }}</span>
+                </v-card>
+              </div>
+              
+              <!-- Polished Content -->
               <div v-if="idea.polishedBody" class="mb-4">
                 <div class="text-h6">Polished Content:</div>
-                <div v-html="renderBlocks(idea.polishedBody)"></div>
+                <v-card variant="tonal" color="success" class="pa-4">
+                  <div class="text-body-1" style="white-space: pre-wrap;">{{ idea.polishedBody }}</div>
+                </v-card>
               </div>
               
+              <!-- Tags -->
               <div v-if="idea.tags" class="mb-4">
                 <div class="text-h6">Tags:</div>
                 <div>
@@ -61,7 +119,16 @@
                 </div>
               </div>
               
-              <div v-if="idea.audio_source && idea.audio_source.data" class="mb-4">
+              <!-- Related Content Strategy -->
+              <div v-if="idea.content_strategy" class="mb-4">
+                <div class="text-h6">Content Strategy:</div>
+                <v-chip color="purple" variant="outlined">
+                  {{ idea.content_strategy.name || 'Strategy' }}
+                </v-chip>
+              </div>
+
+              <!-- Related Audio -->
+              <div v-if="idea.audio_source" class="mb-4">
                 <div class="text-h6">Related Audio:</div>
                 <v-btn
                   color="primary"
@@ -74,14 +141,123 @@
               </div>
             </v-card-text>
             
-            <v-card-actions>
-              <v-btn color="primary" @click="$router.push('/')">
-                Back to Home
+            <v-divider></v-divider>
+
+            <v-card-actions class="pa-4">
+              <v-btn
+                color="grey"
+                variant="outlined"
+                @click="$router.push('/ideas')"
+                prepend-icon="mdi-arrow-left"
+              >
+                Back to List
+              </v-btn>
+              
+              <v-spacer></v-spacer>
+
+              <!-- Feedback Buttons -->
+              <v-btn
+                color="success"
+                variant="outlined"
+                @click="handleLike"
+                :loading="likeLoading"
+                :disabled="dislikeLoading || polishLoading"
+                prepend-icon="mdi-thumb-up"
+              >
+                Like
+              </v-btn>
+              
+              <v-btn
+                color="error"
+                variant="outlined"
+                @click="handleDislike"
+                :loading="dislikeLoading"
+                :disabled="likeLoading || polishLoading"
+                prepend-icon="mdi-thumb-down"
+                class="ml-2"
+              >
+                Dislike
+              </v-btn>
+
+              <!-- Polish Button -->
+              <v-btn
+                color="purple"
+                variant="elevated"
+                @click="handlePolish"
+                :loading="polishLoading"
+                :disabled="likeLoading || dislikeLoading"
+                prepend-icon="mdi-auto-fix"
+                class="ml-4"
+              >
+                Polish
               </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- Snackbar for feedback -->
+      <v-snackbar
+        v-model="snackbar"
+        :color="snackbarColor"
+        :timeout="3000"
+      >
+        {{ snackbarMessage }}
+      </v-snackbar>
+
+      <!-- Polish Result Dialog -->
+      <v-dialog v-model="polishDialog" max-width="800">
+        <v-card>
+          <v-card-title class="bg-purple text-white">
+            <v-icon class="mr-2">mdi-sparkles</v-icon>
+            Polished Idea Created
+          </v-card-title>
+          
+          <v-card-text class="pt-4">
+            <div v-if="polishedIdea">
+              <div class="mb-3">
+                <div class="text-subtitle-2 text-grey">Polished Title:</div>
+                <div class="text-h6">{{ polishedIdea.title }}</div>
+              </div>
+
+              <div class="mb-3">
+                <div class="text-subtitle-2 text-grey">Context Used:</div>
+                <v-chip
+                  v-for="(context, index) in usedContext"
+                  :key="index"
+                  size="small"
+                  class="mr-1 mb-1"
+                  color="purple"
+                  variant="outlined"
+                >
+                  {{ context }}
+                </v-chip>
+              </div>
+
+              <v-divider class="my-3"></v-divider>
+
+              <div>
+                <div class="text-subtitle-2 text-grey mb-2">Polished Text:</div>
+                <v-card variant="tonal" color="purple" class="pa-3">
+                  <div style="white-space: pre-wrap;">{{ polishedIdea.polishedBody }}</div>
+                </v-card>
+              </div>
+            </div>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="grey" @click="polishDialog = false">Close</v-btn>
+            <v-btn
+              color="purple"
+              variant="elevated"
+              :to="{ name: 'IdeaDetail', params: { id: polishedIdea?.id } }"
+            >
+              View Polished Idea
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </div>
     
     <div v-else>
@@ -93,7 +269,7 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import axios from 'axios';
+import { ideasService } from '../api/ideas.service';
 
 export default {
   name: 'IdeaDetail',
@@ -104,26 +280,92 @@ export default {
     const loading = ref(true);
     const error = ref(null);
     
-    const API_URL = process.env.VUE_APP_API_URL || 'http://localhost:1337/api';
+    // Feedback state
+    const likeLoading = ref(false);
+    const dislikeLoading = ref(false);
+    const polishLoading = ref(false);
+    
+    // Snackbar state
+    const snackbar = ref(false);
+    const snackbarMessage = ref('');
+    const snackbarColor = ref('success');
+    
+    // Polish dialog state
+    const polishDialog = ref(false);
+    const polishedIdea = ref(null);
+    const usedContext = ref([]);
     
     const fetchIdea = async () => {
       loading.value = true;
       error.value = null;
       
       try {
-        const token = localStorage.getItem('token');
-        const response = await axios.get(`${API_URL}/ideas/${route.params.id}?populate=*`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        idea.value = response.data.data;
+        const response = await ideasService.getIdea(route.params.id);
+        // Strapi v5 returns data directly without attributes wrapper
+        idea.value = response.data;
       } catch (err) {
         console.error('Error fetching idea:', err);
         error.value = err.message || 'Failed to fetch idea details';
       } finally {
         loading.value = false;
+      }
+    };
+    
+    const handleLike = async () => {
+      likeLoading.value = true;
+      try {
+        await ideasService.likeIdea(route.params.id);
+        snackbarMessage.value = 'You liked this idea!';
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+      } catch (err) {
+        console.error('Error liking idea:', err);
+        snackbarMessage.value = 'Failed to record like';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+      } finally {
+        likeLoading.value = false;
+      }
+    };
+    
+    const handleDislike = async () => {
+      dislikeLoading.value = true;
+      try {
+        await ideasService.dislikeIdea(route.params.id);
+        snackbarMessage.value = 'You disliked this idea.';
+        snackbarColor.value = 'warning';
+        snackbar.value = true;
+      } catch (err) {
+        console.error('Error disliking idea:', err);
+        snackbarMessage.value = 'Failed to record dislike';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+      } finally {
+        dislikeLoading.value = false;
+      }
+    };
+    
+    const handlePolish = async () => {
+      polishLoading.value = true;
+      try {
+        const result = await ideasService.polishIdea(route.params.id);
+        
+        if (result.success && result.polished) {
+          polishedIdea.value = result.polished;
+          usedContext.value = result.usedContext || [];
+          polishDialog.value = true;
+          
+          snackbarMessage.value = 'Idea polished successfully!';
+          snackbarColor.value = 'success';
+          snackbar.value = true;
+        }
+      } catch (err) {
+        console.error('Error polishing idea:', err);
+        snackbarMessage.value = err.response?.data?.error?.message || 'Failed to polish idea';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+      } finally {
+        polishLoading.value = false;
       }
     };
     
@@ -152,15 +394,6 @@ export default {
       return tagsString.split(',').map(tag => tag.trim());
     };
     
-    const renderBlocks = (blocks) => {
-      if (!blocks) return '';
-      
-      // Simple rendering of blocks content - in a real app you'd use a proper blocks renderer
-      let html = `<p>${ blocks}</p>`;
-
-      return html;
-    };
-    
     onMounted(() => {
       fetchIdea();
     });
@@ -169,10 +402,21 @@ export default {
       idea,
       loading,
       error,
+      likeLoading,
+      dislikeLoading,
+      polishLoading,
+      snackbar,
+      snackbarMessage,
+      snackbarColor,
+      polishDialog,
+      polishedIdea,
+      usedContext,
+      handleLike,
+      handleDislike,
+      handlePolish,
       formatDate,
       getStatusColor,
-      parseTags,
-      renderBlocks
+      parseTags
     };
   }
 };
