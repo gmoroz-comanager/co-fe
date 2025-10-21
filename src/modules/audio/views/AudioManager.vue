@@ -186,6 +186,25 @@
         </div>
       </div>
     </div>
+    
+    <!-- Snackbar for notifications -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="snackbar.timeout"
+      location="top"
+    >
+      {{ snackbar.message }}
+      <template v-slot:actions>
+        <v-btn
+          color="white"
+          variant="text"
+          @click="snackbar.show = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -220,12 +239,26 @@ export default defineComponent({
     const responseJson = ref('');
     const transcribeResponseJson = ref('');
     
+    const snackbar = reactive({
+      show: false,
+      message: '',
+      color: 'success',
+      timeout: 2000
+    });
+    
     // Computed
     const audioSources = computed(() => store.getters['audio/audioSources']);
     const loading = computed(() => store.getters['audio/isLoading']);
     const error = computed(() => store.state.audio.error);
     
     // Methods
+    function showSnackbar(message: string, color: string = 'success', timeout: number = 2000): void {
+      snackbar.message = message;
+      snackbar.color = color;
+      snackbar.timeout = timeout;
+      snackbar.show = true;
+    }
+    
     function getBaseUrl(): string {
       return httpService.getBaseUrl();
     }
@@ -291,7 +324,7 @@ export default defineComponent({
     
     async function handleSubmit(): Promise<void> {
       if (!audioForm.title) {
-        alert('Необходимо указать заголовок');
+        showSnackbar('Необходимо указать заголовок', 'error', 2000);
         return;
       }
       
@@ -329,7 +362,7 @@ export default defineComponent({
         audioForm.ideas = '';
         audioForm.files = [];
         
-        alert('Audio successfully added');
+        showSnackbar('Audio successfully added', 'success', 2000);
       } catch (error: any) {
         console.error('Error:', error);
         if (error.response) {
@@ -337,7 +370,7 @@ export default defineComponent({
         } else {
           responseJson.value = JSON.stringify(error.message, null, 2);
         }
-        alert('Error creating audio file. See details below.');
+        showSnackbar('Error creating audio file. See details below.', 'error', 2000);
       } finally {
         isSubmitting.value = false;
       }
@@ -348,7 +381,7 @@ export default defineComponent({
         await store.dispatch('audio/fetchAudioSources');
       } catch (error) {
         console.error(error);
-        alert('Error loading audio files');
+        showSnackbar('Error loading audio files', 'error', 2000);
       }
     }
     
@@ -366,10 +399,10 @@ export default defineComponent({
       
       try {
         await store.dispatch('audio/deleteAudioSource', currentDeleteId.value);
-        alert('Audio file deleted');
+        showSnackbar('Audio file deleted', 'success', 2000);
       } catch (error) {
         console.error(error);
-        alert('Error deleting audio file');
+        showSnackbar('Error deleting audio file', 'error', 2000);
       } finally {
         isDeleting.value = false;
         dialogVisible.value = false;
@@ -391,7 +424,7 @@ export default defineComponent({
         // Refresh audio list to get updated transcription
         await fetchAudioSources();
         
-        alert('Transcription completed successfully');
+        showSnackbar('Transcription completed successfully', 'success', 2000);
       } catch (error: any) {
         console.error('Error transcribing:', error);
         
@@ -401,7 +434,7 @@ export default defineComponent({
           transcribeResponseJson.value = JSON.stringify(error.message, null, 2);
         }
         
-        alert('Error transcribing audio');
+        showSnackbar('Error transcribing audio', 'error', 2000);
       }
     }
     
@@ -420,6 +453,8 @@ export default defineComponent({
       audioSources,
       responseJson,
       transcribeResponseJson,
+      snackbar,
+      showSnackbar,
       getBaseUrl,
       handleFileUpload,
       handleSubmit,

@@ -94,6 +94,25 @@
         </div>
       </v-col>
     </v-row>
+    
+    <!-- Snackbar for notifications -->
+    <v-snackbar
+      v-model="snackbar.show"
+      :color="snackbar.color"
+      :timeout="snackbar.timeout"
+      location="top"
+    >
+      {{ snackbar.message }}
+      <template v-slot:actions>
+        <v-btn
+          color="white"
+          variant="text"
+          @click="snackbar.show = false"
+        >
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
@@ -114,7 +133,13 @@ export default {
       linkedinRules: [
         (v) => !!v || 'LinkedIn URL is required',
         (v) => (v && v.includes('linkedin.com')) || 'Please provide a valid LinkedIn URL'
-      ]
+      ],
+      snackbar: {
+        show: false,
+        message: '',
+        color: 'success',
+        timeout: 2000
+      }
     }
   },
   created() {
@@ -124,19 +149,31 @@ export default {
     }
   },
   methods: {
+    showSnackbar(message, color = 'success', timeout = 2000) {
+      this.snackbar.message = message
+      this.snackbar.color = color
+      this.snackbar.timeout = timeout
+      this.snackbar.show = true
+    },
+    
     register() {
       this.loading = true
       this.error = null
       
       this.$store.dispatch('auth/register', this.user)
         .then((response) => {
-          // Show success message - user needs to wait for admin activation
-          alert(response.message || 'Registration successful! Your account is pending activation.')
-          this.$router.push('/login')
+          // Show success message - user needs to wait for admin activation (10 seconds)
+          this.showSnackbar(
+            response.message || 'Registration successful! Your account is pending activation.',
+            'success',
+            10000
+          )
         })
         .catch(err => {
           console.error(err)
-          this.error = err.response?.data?.error?.message || 'Registration failed. This email may already be in use.'
+          const errorMessage = err.response?.data?.error?.message || 'Registration failed. This email may already be in use.'
+          this.error = errorMessage
+          this.showSnackbar(errorMessage, 'error', 2000)
         })
         .finally(() => {
           this.loading = false
