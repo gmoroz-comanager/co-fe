@@ -6,6 +6,8 @@ export interface User {
   username: string;
   email: string;
   linkedinUrl?: string;
+  linkedinProfilePdf?: any;
+  activatedByAdmin?: boolean;
   finishedOnboardingStage1?: boolean;
   onboardingComplete?: boolean;
   smartProfileEmbeded?: {

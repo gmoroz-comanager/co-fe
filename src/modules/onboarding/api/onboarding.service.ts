@@ -52,7 +52,15 @@ export interface SkipStageResponse {
  */
 class OnboardingService {
   /**
-   * Upload LinkedIn PDF for analysis
+   * Process user profile from already uploaded PDF (exhibition flow)
+   */
+  async processProfile(): Promise<UploadPdfResponse> {
+    const response = await httpService.post<UploadPdfResponse>('/onboarding/process-profile');
+    return response.data;
+  }
+
+  /**
+   * Upload LinkedIn PDF for analysis (legacy - for future use)
    */
   async uploadLinkedInPdf(file: File): Promise<UploadPdfResponse> {
     const formData = new FormData();
