@@ -46,8 +46,11 @@ router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, n
   if (isLoggedIn && !isAuthRoute && !isOnboardingRoute) {
     // Check if user needs to complete onboarding
     if (currentUser && currentUser.id && !currentUser.finishedOnboardingStage1) {
-      next('/onboarding/stage1');
-      return;
+      return next('/onboarding/stage1');
+    }
+    // Redirect to stage 2 if stage 1 is done but onboarding is not complete
+    else if (currentUser && currentUser.id && !currentUser.onboardingComplete) {
+      return next('/onboarding/stage2');
     }
   }
   

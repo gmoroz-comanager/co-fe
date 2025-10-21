@@ -7,6 +7,12 @@ const onboardingRoutes: Array<RouteRecordRaw> = [
     name: 'OnboardingStage1',
     component: OnboardingStage1,
     meta: { requiresAuth: true, isOnboarding: true }
+  },
+  {
+    path: '/onboarding/stage2',
+    name: 'OnboardingStage2',
+    component: () => import('../views/OnboardingStage2.vue'), // Lazy load
+    meta: { requiresAuth: true, isOnboarding: true }
   }
 ];
 

@@ -47,6 +47,14 @@ export interface SkipStageResponse {
   message: string;
 }
 
+export interface Stage2MessageResponse {
+  response: {
+    role: string;
+    content: string;
+  };
+  isComplete: boolean;
+}
+
 /**
  * Onboarding service for handling onboarding flows
  */
@@ -56,6 +64,22 @@ class OnboardingService {
    */
   async processProfile(): Promise<UploadPdfResponse> {
     const response = await httpService.post<UploadPdfResponse>('/onboarding/process-profile');
+    return response.data;
+  }
+
+  /**
+   * Initializes the Stage 2 chat.
+   */
+  async initStage2Chat(): Promise<any[]> {
+    const response = await httpService.get('/onboarding/stage2/init');
+    return response.data;
+  }
+
+  /**
+   * Posts a message to the Stage 2 chat.
+   */
+  async postStage2Message(message: string): Promise<Stage2MessageResponse> {
+    const response = await httpService.post<Stage2MessageResponse>('/onboarding/stage2/message', { message });
     return response.data;
   }
 

@@ -12,6 +12,7 @@ export interface User {
   onboardingComplete?: boolean;
   smartProfileEmbeded?: {
     externalProfileAnalytics?: any;
+    completeBrandProfile?: any;
   };
   [key: string]: any;
 }
