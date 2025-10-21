@@ -9,6 +9,7 @@ export interface RegisterData {
   username: string;
   email: string;
   password: string;
+  linkedinUrl: string;
 }
 
 export interface AuthResponse {
@@ -45,7 +46,8 @@ class AuthService {
     const response = await httpService.post<AuthResponse>('/auth/local/register', {
       username: data.username,
       email: data.email,
-      password: data.password
+      password: data.password,
+      linkedinUrl: data.linkedinUrl
     });
     
     this.setAuthData(response.data);

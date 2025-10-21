@@ -32,6 +32,16 @@
             ></v-text-field>
             
             <v-text-field
+              v-model="user.linkedinUrl"
+              label="LinkedIn URL"
+              variant="outlined"
+              :disabled="loading"
+              placeholder="https://www.linkedin.com/in/yourprofile"
+              required
+              class="mb-4"
+            ></v-text-field>
+            
+            <v-text-field
               v-model="user.password"
               label="Password"
               variant="outlined"
@@ -94,6 +104,7 @@ export default {
       user: {
         username: '',
         email: '',
+        linkedinUrl: '',
         password: ''
       },
       loading: false,
@@ -114,11 +125,12 @@ export default {
       
       this.$store.dispatch('auth/register', this.user)
         .then(() => {
+          // Note: User account needs to be activated by an administrator before login
           this.$router.push('/')
         })
         .catch(err => {
           console.error(err)
-          this.error = 'Registration failed. This email may already be in use.'
+          this.error = err.response?.data?.error?.message || 'Registration failed. This email may already be in use.'
         })
         .finally(() => {
           this.loading = false

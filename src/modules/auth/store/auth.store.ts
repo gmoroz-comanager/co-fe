@@ -5,6 +5,7 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  linkedinUrl?: string;
   finishedOnboardingStage1?: boolean;
   onboardingComplete?: boolean;
   smartProfileEmbeded?: {
@@ -81,7 +82,7 @@ const authModule: Module<AuthState, any> = {
       }
     },
     
-    async register({ commit }, userData: { username: string; email: string; password: string }) {
+    async register({ commit }, userData: { username: string; email: string; password: string; linkedinUrl: string }) {
       commit('SET_LOADING', true);
       commit('SET_ERROR', null);
       
