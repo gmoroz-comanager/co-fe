@@ -76,6 +76,19 @@ class AuthService {
   }
 
   /**
+   * Fetch current user profile
+   */
+  async fetchCurrentUser(): Promise<any> {
+    const response = await httpService.get('/users/me');
+    const user = response.data;
+    
+    // Update local storage with fresh user data
+    localStorage.setItem('user', JSON.stringify(user));
+    
+    return user;
+  }
+
+  /**
    * Set authentication data in local storage
    */
   private setAuthData(authData: AuthResponse): void {

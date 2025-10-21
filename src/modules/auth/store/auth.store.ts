@@ -5,6 +5,11 @@ export interface User {
   id: number;
   username: string;
   email: string;
+  finishedOnboardingStage1?: boolean;
+  onboardingComplete?: boolean;
+  smartProfileEmbeded?: {
+    externalProfileAnalytics?: any;
+  };
   [key: string]: any;
 }
 
@@ -43,6 +48,10 @@ const authModule: Module<AuthState, any> = {
     
     AUTH_SUCCESS(state, { token, user }: { token: string; user: User }) {
       state.token = token;
+      state.user = user;
+    },
+    
+    UPDATE_USER(state, user: User) {
       state.user = user;
     },
     
@@ -104,6 +113,17 @@ const authModule: Module<AuthState, any> = {
         if (user && token) {
           commit('AUTH_SUCCESS', { token, user });
         }
+      }
+    },
+    
+    async refreshUser({ commit }) {
+      try {
+        const user = await authService.fetchCurrentUser();
+        commit('UPDATE_USER', user);
+        return user;
+      } catch (error) {
+        console.error('Failed to refresh user data:', error);
+        throw error;
       }
     }
   }

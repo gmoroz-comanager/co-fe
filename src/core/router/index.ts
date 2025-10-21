@@ -5,6 +5,7 @@ import authRoutes from '@/modules/auth/router';
 import ideasRoutes from '@/modules/ideas/router';
 import audioRoutes from '@/modules/audio/router';
 import strategyRoutes from '@/modules/strategy/router';
+import onboardingRoutes from '@/modules/onboarding/router';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -14,6 +15,7 @@ const routes: Array<RouteRecordRaw> = [
     meta: { requiresAuth: true }
   },
   ...authRoutes,
+  ...onboardingRoutes,
   ...ideasRoutes,
   ...audioRoutes,
   ...strategyRoutes
@@ -25,12 +27,30 @@ const router = createRouter({
 });
 
 router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, next: NavigationGuardNext) => {
+  const isLoggedIn = store.getters['auth/isLoggedIn'];
+  const currentUser = store.getters['auth/currentUser'];
+  
+  // Check if route requires authentication
   if (to.matched.some(record => record.meta.requiresAuth)) {
-    if (!store.getters['auth/isLoggedIn']) {
+    if (!isLoggedIn) {
       next('/login');
       return;
     }
   }
+  
+  // Check onboarding completion
+  // Skip onboarding check for login, register, and onboarding routes
+  const isAuthRoute = to.path === '/login' || to.path === '/register';
+  const isOnboardingRoute = to.matched.some(record => record.meta.isOnboarding);
+  
+  if (isLoggedIn && !isAuthRoute && !isOnboardingRoute) {
+    // Check if user needs to complete onboarding
+    if (currentUser && currentUser.id && !currentUser.finishedOnboardingStage1) {
+      next('/onboarding/stage1');
+      return;
+    }
+  }
+  
   next();
 });
 
