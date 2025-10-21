@@ -88,10 +88,8 @@ const authModule: Module<AuthState, any> = {
       
       try {
         const response = await authService.register(userData);
-        commit('AUTH_SUCCESS', {
-          token: response.jwt,
-          user: response.user
-        });
+        // Don't set auth data - user needs admin activation
+        // Just return the response with the message
         return response;
       } catch (error: any) {
         commit('SET_ERROR', error.response?.data?.error?.message || 'Registration failed');

@@ -41,16 +41,17 @@ class AuthService {
 
   /**
    * Register a new user
+   * Note: Does not return JWT - account must be activated by admin first
    */
-  async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await httpService.post<AuthResponse>('/auth/local/register', {
+  async register(data: RegisterData): Promise<any> {
+    const response = await httpService.post<any>('/auth/local/register', {
       username: data.username,
       email: data.email,
       password: data.password,
       linkedinUrl: data.linkedinUrl
     });
     
-    this.setAuthData(response.data);
+    // Don't set auth data - user needs activation
     return response.data;
   }
 

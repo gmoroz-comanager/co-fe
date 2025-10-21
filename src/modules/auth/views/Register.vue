@@ -129,9 +129,10 @@ export default {
       this.error = null
       
       this.$store.dispatch('auth/register', this.user)
-        .then(() => {
-          // Note: User account needs to be activated by an administrator before login
-          this.$router.push('/')
+        .then((response) => {
+          // Show success message - user needs to wait for admin activation
+          alert(response.message || 'Registration successful! Your account is pending activation.')
+          this.$router.push('/login')
         })
         .catch(err => {
           console.error(err)
