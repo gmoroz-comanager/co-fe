@@ -38,6 +38,7 @@
               :disabled="loading"
               placeholder="https://www.linkedin.com/in/yourprofile"
               required
+              :rules="linkedinRules"
               class="mb-4"
             ></v-text-field>
             
@@ -109,7 +110,11 @@ export default {
       },
       loading: false,
       error: null,
-      showPassword: false
+      showPassword: false,
+      linkedinRules: [
+        (v) => !!v || 'LinkedIn URL is required',
+        (v) => (v && v.includes('linkedin.com')) || 'Please provide a valid LinkedIn URL'
+      ]
     }
   },
   created() {
