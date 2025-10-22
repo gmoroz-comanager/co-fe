@@ -74,22 +74,22 @@
 
             <!-- Tone and Style -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Тон и стиль</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Tone and Style</h2>
               <div class="space-y-3">
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Тон:</span>
+                  <span class="text-sm font-medium text-gray-500">Tone:</span>
                   <p class="text-gray-900">{{ getToneTypeLabel(strategy.toneType) }}</p>
                 </div>
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Формальность:</span>
+                  <span class="text-sm font-medium text-gray-500">Formality:</span>
                   <p class="text-gray-900">{{ getFormalityLabel(strategy.formality) }}</p>
                 </div>
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Длина предложений:</span>
+                  <span class="text-sm font-medium text-gray-500">Sentence Length:</span>
                   <p class="text-gray-900">{{ getSentenceLengthLabel(strategy.sentenceLength) }}</p>
                 </div>
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Количество юмора:</span>
+                  <span class="text-sm font-medium text-gray-500">Humor Amount:</span>
                   <p class="text-gray-900">{{ strategy.humorAmount }}/10</p>
                 </div>
               </div>
@@ -97,14 +97,14 @@
 
             <!-- Lexicon -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Лексика</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Lexicon</h2>
               <div class="space-y-4">
                 <div v-if="strategy.lexiconPreferred">
-                  <span class="text-sm font-medium text-gray-500">Предпочитаемые слова:</span>
+                  <span class="text-sm font-medium text-gray-500">Preferred Words:</span>
                   <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.lexiconPreferred }}</p>
                 </div>
                 <div v-if="strategy.lexiconAvoid">
-                  <span class="text-sm font-medium text-gray-500">Избегаемые слова:</span>
+                  <span class="text-sm font-medium text-gray-500">Words to Avoid:</span>
                   <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.lexiconAvoid }}</p>
                 </div>
               </div>
@@ -115,14 +115,14 @@
           <div class="space-y-6">
             <!-- Core Values -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Ценности и принципы</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Values and Principles</h2>
               <div class="space-y-4">
                 <div v-if="strategy.coreValues">
-                  <span class="text-sm font-medium text-gray-500">Основные ценности:</span>
+                  <span class="text-sm font-medium text-gray-500">Core Values:</span>
                   <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.coreValues }}</p>
                 </div>
                 <div v-if="strategy.avoidTopics">
-                  <span class="text-sm font-medium text-gray-500">Избегаемые темы:</span>
+                  <span class="text-sm font-medium text-gray-500">Topics to Avoid:</span>
                   <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.avoidTopics }}</p>
                 </div>
               </div>
@@ -130,18 +130,18 @@
 
             <!-- Goals and Settings -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Цели и настройки</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Goals and Settings</h2>
               <div class="space-y-3">
                 <div>
-                  <span class="text-sm font-medium text-gray-500">Постов в месяц:</span>
+                  <span class="text-sm font-medium text-gray-500">Posts per Month:</span>
                   <p class="text-gray-900">{{ strategy.targetPostCount }}</p>
                 </div>
                 <div v-if="strategy.smmChannelsArray">
-                  <span class="text-sm font-medium text-gray-500">Социальные сети:</span>
+                  <span class="text-sm font-medium text-gray-500">Social Networks:</span>
                   <p class="text-gray-900">{{ strategy.smmChannelsArray }}</p>
                 </div>
                 <div v-if="strategy.mainGoalsArray">
-                  <span class="text-sm font-medium text-gray-500">Основные цели:</span>
+                  <span class="text-sm font-medium text-gray-500">Main Goals:</span>
                   <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.mainGoalsArray }}</p>
                 </div>
               </div>
@@ -149,36 +149,36 @@
 
             <!-- Call to Action -->
             <div v-if="strategy.callToActionFormatsArray" class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Призывы к действию</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Calls to Action</h2>
               <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.callToActionFormatsArray }}</p>
             </div>
 
             <!-- User Examples -->
             <div v-if="strategy.userExamples" class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Примеры контента</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Content Examples</h2>
               <p class="text-gray-900 whitespace-pre-wrap">{{ strategy.userExamples }}</p>
             </div>
 
             <!-- Additional Settings -->
             <div class="bg-white rounded-lg shadow-sm border p-6">
-              <h2 class="text-xl font-semibold text-gray-900 mb-4">Дополнительные настройки</h2>
+              <h2 class="text-xl font-semibold text-gray-900 mb-4">Additional Settings</h2>
               <div class="space-y-2">
                 <div class="flex items-center">
-                  <span class="text-sm text-gray-500 mr-2">Эмодзи:</span>
+                  <span class="text-sm text-gray-500 mr-2">Emojis:</span>
                   <span :class="strategy.useEmodji ? 'text-green-600' : 'text-red-600'">
-                    {{ strategy.useEmodji ? 'Да' : 'Нет' }}
+                    {{ strategy.useEmodji ? 'Yes' : 'No' }}
                   </span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-sm text-gray-500 mr-2">Вопросы аудитории:</span>
+                  <span class="text-sm text-gray-500 mr-2">Audience Questions:</span>
                   <span :class="strategy.useAudienceQuestions ? 'text-green-600' : 'text-red-600'">
-                    {{ strategy.useAudienceQuestions ? 'Да' : 'Нет' }}
+                    {{ strategy.useAudienceQuestions ? 'Yes' : 'No' }}
                   </span>
                 </div>
                 <div class="flex items-center">
-                  <span class="text-sm text-gray-500 mr-2">Сленг:</span>
+                  <span class="text-sm text-gray-500 mr-2">Slang:</span>
                   <span :class="strategy.useSlang ? 'text-green-600' : 'text-red-600'">
-                    {{ strategy.useSlang ? 'Да' : 'Нет' }}
+                    {{ strategy.useSlang ? 'Yes' : 'No' }}
                   </span>
                 </div>
               </div>
@@ -241,7 +241,7 @@ const getSentenceLengthLabel = (type: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('ru-RU');
+  return new Date(dateString).toLocaleDateString('en-US');
 };
 
 
