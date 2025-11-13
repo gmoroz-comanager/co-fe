@@ -12,8 +12,8 @@ class BrandProfileService {
     return response.data.data;
   }
 
-  async updateBrandProfile(id: string, data: Partial<BrandProfile>): Promise<BrandProfile> {
-    const response = await httpService.put<{ data: BrandProfile }>(`/brand-profiles/${id}`, { data });
+  async updateBrandProfile(documentId: string, data: Partial<BrandProfile>): Promise<BrandProfile> {
+    const response = await httpService.put<{ data: BrandProfile }>(`/brand-profiles/${documentId}`, { data });
     return response.data.data;
   }
 }

@@ -51,6 +51,7 @@ const brandProfileModule: Module<BrandProfileState, any> = {
       commit('setError', null);
       try {
         let savedProfile;
+        
         if (profileData.documentId) {
           savedProfile = await brandProfileService.updateBrandProfile(profileData.documentId, profileData);
         } else {

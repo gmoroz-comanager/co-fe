@@ -57,6 +57,18 @@ class HttpService {
             config.headers = { 'Authorization': `Bearer ${token}` };
           }
         }
+
+        // Strip service fields from PUT requests to avoid validation errors
+        if (config.method === 'put' && config.data?.data) {
+          const dataToClean = config.data.data;
+          delete dataToClean.id;
+          delete dataToClean.documentId;
+          delete dataToClean.createdAt;
+          delete dataToClean.updatedAt;
+          delete dataToClean.publishedAt;
+          delete dataToClean.owner; // Owner should not be mutable
+        }
+
         return config;
       },
       (error) => {
