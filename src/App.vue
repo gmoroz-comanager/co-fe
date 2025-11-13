@@ -23,9 +23,9 @@
         <v-icon left>mdi-lightbulb-outline</v-icon>
         Ideas
       </v-btn>
-      <v-btn to="/strategies" text>
-        <v-icon left>mdi-brain</v-icon>
-        Strategies
+      <v-btn to="/brand-profile" text>
+        <v-icon left>mdi-account-star</v-icon>
+        Brand Profile
       </v-btn>
       <v-btn @click="logout" text>
         <v-icon left>mdi-logout</v-icon>

@@ -1,16 +1,22 @@
 import { createStore } from 'vuex';
-import authModule from '@/modules/auth/store';
-import ideasModule from '@/modules/ideas/store';
+import authModule from '@/modules/auth/store/auth.store';
+import ideasModule from '@/modules/ideas/store/ideas.store';
 import audioModule from '@/modules/audio/store';
-import {strategyModule} from '@/modules/strategy/store';
+import brandProfileModule from '@/modules/brand-profile/store/brand-profile.store';
+import { strategyModule } from '@/modules/strategy/store/strategy.store';
 
-const store = createStore({
+export interface RootState {
+  // Define root state properties here if any
+}
+
+const store = createStore<RootState>({
   modules: {
     auth: authModule,
     ideas: ideasModule,
+    strategy: strategyModule,
     audio: audioModule,
-    strategy: strategyModule
-  }
+    brandProfile: brandProfileModule,
+  },
 });
 
 export default store;

@@ -6,19 +6,21 @@ import ideasRoutes from '@/modules/ideas/router';
 import audioRoutes from '@/modules/audio/router';
 import strategyRoutes from '@/modules/strategy/router';
 import onboardingRoutes from '@/modules/onboarding/router';
+import brandProfileRoutes from '@/modules/brand-profile/router';
 
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/',
     name: 'Home',
     component: Home,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
   },
   ...authRoutes,
-  ...onboardingRoutes,
   ...ideasRoutes,
+  ...strategyRoutes,
   ...audioRoutes,
-  ...strategyRoutes
+  ...brandProfileRoutes,
+  ...onboardingRoutes,
 ];
 
 const router = createRouter({
