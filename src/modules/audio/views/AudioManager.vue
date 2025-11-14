@@ -143,7 +143,7 @@
                 <h3 class="text-xl font-semibold text-gray-800">{{ getAudioTitle(audio) }}</h3>
                 <div class="flex space-x-2">
                   <button
-                    v-if="['new', 'transcribing'].includes(getAudioWorkStatus(audio)) || !getAudioWorkStatus(audio)"
+                    v-if="['new', 'transcribing', 'working_failed'].includes(getAudioWorkStatus(audio)) || !getAudioWorkStatus(audio)"
                     class="px-2 py-1 bg-green-600 text-white rounded-md"
                     @click="handleTranscribe(audio.documentId || audio.id)"
                     :disabled="getAudioWorkStatus(audio) === 'transcribing' || transcribingId === (audio.documentId || audio.id)"
@@ -157,6 +157,11 @@
                     Delete
                   </button>
                 </div>
+              </div>
+              
+              <div v-if="getAudioWorkStatus(audio) === 'working_failed'" class="mt-2 text-red-600 text-sm">
+                <v-icon color="red" small>mdi-alert-circle-outline</v-icon>
+                An error occurred during processing. Please try again.
               </div>
               
               <div v-if="getAudioFiles(audio).length > 0" class="mt-4">

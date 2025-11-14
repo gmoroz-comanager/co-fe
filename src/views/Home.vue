@@ -9,7 +9,7 @@
     <!-- Ideas Dashboard Widget -->
     <v-row>
       <v-col cols="12" md="6">
-        <v-card class="ideas-dashboard">
+        <v-card class="ideas-dashboard" rounded="lg">
           <v-card-title class="text-h5">
             Ideas Dashboard
           </v-card-title>
@@ -25,7 +25,7 @@
               <!-- Stats Cards -->
               <v-row>
                 <v-col cols="6">
-                  <v-card variant="outlined">
+                  <v-card rounded="lg" variant="tonal">
                     <v-card-title class="d-flex align-center">
                       <v-badge dot color="amber" class="mr-2"></v-badge>
                       Total Ideas
@@ -37,7 +37,7 @@
                 </v-col>
                 
                 <v-col cols="6">
-                  <v-card variant="outlined">
+                  <v-card rounded="lg" variant="tonal">
                     <v-card-title class="d-flex align-center">
                       <v-badge dot color="red" class="mr-2"></v-badge>
                       New Ideas
@@ -50,7 +50,7 @@
               </v-row>
               
               <!-- Recent Ideas List -->
-              <v-card class="mt-4" variant="outlined">
+              <v-card class="mt-4" rounded="lg">
                 <v-card-title>Recent Ideas</v-card-title>
                 <v-list v-if="recentIdeas.length > 0">
                   <v-list-item
@@ -105,7 +105,7 @@
       
       <!-- Additional content can go here -->
       <v-col cols="12" md="6">
-        <v-card height="100%">
+        <v-card height="100%" rounded="lg">
           <v-card-title class="text-h5">
             Quick Actions
           </v-card-title>
