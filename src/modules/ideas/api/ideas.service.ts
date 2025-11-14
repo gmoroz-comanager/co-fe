@@ -195,16 +195,10 @@ class IdeasService {
   /**
    * Polish an idea (expand it using AI with transcription memory)
    */
-  async polishIdea(id: string | number): Promise<{
-    success: boolean;
-    polished: Idea;
-    usedContext: string[];
-  }> {
-    const response = await httpService.post<{
-      success: boolean;
-      polished: Idea;
-      usedContext: string[];
-    }>(`/ideas/${id}/polish`);
+  async polishIdea(id: string | number, feedback: string): Promise<IdeaResponse> {
+    const response = await httpService.post<IdeaResponse>(`/ideas/${id}/polish`, {
+      feedback,
+    });
     return response.data;
   }
 }

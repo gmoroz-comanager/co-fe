@@ -183,7 +183,7 @@
               <v-btn
                 color="purple"
                 variant="elevated"
-                @click="handlePolish"
+                @click="openPolishDialog"
                 :loading="polishLoading"
                 :disabled="likeLoading || dislikeLoading"
                 prepend-icon="mdi-auto-fix"
@@ -205,55 +205,30 @@
         {{ snackbarMessage }}
       </v-snackbar>
 
-      <!-- Polish Result Dialog -->
-      <v-dialog v-model="polishDialog" max-width="800">
+      <!-- Polish Feedback Dialog -->
+      <v-dialog v-model="polishDialog" max-width="600">
         <v-card>
-          <v-card-title class="bg-purple text-white">
-            <v-icon class="mr-2">mdi-sparkles</v-icon>
-            Polished Idea Created
-          </v-card-title>
-          
-          <v-card-text class="pt-4">
-            <div v-if="polishedIdea">
-              <div class="mb-3">
-                <div class="text-subtitle-2 text-grey">Polished Title:</div>
-                <div class="text-h6">{{ polishedIdea.title }}</div>
-              </div>
-
-              <div class="mb-3">
-                <div class="text-subtitle-2 text-grey">Context Used:</div>
-                <v-chip
-                  v-for="(context, index) in usedContext"
-                  :key="index"
-                  size="small"
-                  class="mr-1 mb-1"
-                  color="purple"
-                  variant="outlined"
-                >
-                  {{ context }}
-                </v-chip>
-              </div>
-
-              <v-divider class="my-3"></v-divider>
-
-              <div>
-                <div class="text-subtitle-2 text-grey mb-2">Polished Text:</div>
-                <v-card variant="tonal" color="purple" class="pa-3">
-                  <div style="white-space: pre-wrap;">{{ polishedIdea.polishedBody }}</div>
-                </v-card>
-              </div>
-            </div>
+          <v-card-title>Add Feedback for Polishing</v-card-title>
+          <v-card-text>
+            <p class="mb-4">What would you like to improve or change?</p>
+            <v-textarea
+              v-model="polishFeedback"
+              label="Your feedback"
+              rows="4"
+              variant="outlined"
+              auto-grow
+            ></v-textarea>
           </v-card-text>
-
           <v-card-actions>
             <v-spacer></v-spacer>
-            <v-btn color="grey" @click="polishDialog = false">Close</v-btn>
+            <v-btn text @click="closePolishDialog">Cancel</v-btn>
             <v-btn
               color="purple"
               variant="elevated"
-              :to="{ name: 'IdeaDetail', params: { id: polishedIdea?.id } }"
+              @click="submitPolishRequest"
+              :loading="polishLoading"
             >
-              View Polished Idea
+              Submit
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -292,8 +267,7 @@ export default {
     
     // Polish dialog state
     const polishDialog = ref(false);
-    const polishedIdea = ref(null);
-    const usedContext = ref([]);
+    const polishFeedback = ref('');
     
     const fetchIdea = async () => {
       loading.value = true;
@@ -345,19 +319,28 @@ export default {
       }
     };
     
-    const handlePolish = async () => {
+    const openPolishDialog = () => {
+      polishFeedback.value = '';
+      polishDialog.value = true;
+    };
+    
+    const closePolishDialog = () => {
+      polishDialog.value = false;
+    };
+    
+    const submitPolishRequest = async () => {
       polishLoading.value = true;
       try {
-        const result = await ideasService.polishIdea(route.params.id);
+        const response = await ideasService.polishIdea(route.params.id, polishFeedback.value);
         
-        if (result.success && result.polished) {
-          polishedIdea.value = result.polished;
-          usedContext.value = result.usedContext || [];
-          polishDialog.value = true;
+        if (response.data) {
+          idea.value = response.data;
           
           snackbarMessage.value = 'Idea polished successfully!';
           snackbarColor.value = 'success';
           snackbar.value = true;
+          
+          closePolishDialog();
         }
       } catch (err) {
         console.error('Error polishing idea:', err);
@@ -409,11 +392,12 @@ export default {
       snackbarMessage,
       snackbarColor,
       polishDialog,
-      polishedIdea,
-      usedContext,
+      polishFeedback,
       handleLike,
       handleDislike,
-      handlePolish,
+      openPolishDialog,
+      closePolishDialog,
+      submitPolishRequest,
       formatDate,
       getStatusColor,
       parseTags
