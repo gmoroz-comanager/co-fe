@@ -179,18 +179,52 @@
                 Dislike
               </v-btn>
 
-              <!-- Polish Button -->
-              <v-btn
-                color="purple"
-                variant="elevated"
-                @click="openPolishDialog"
-                :loading="polishLoading"
-                :disabled="likeLoading || dislikeLoading"
-                prepend-icon="mdi-auto-fix"
-                class="ml-4"
+              <!-- Polish Button with Popover -->
+              <v-menu
+                v-model="polishMenuOpen"
+                :close-on-content-click="false"
+                location="top center"
+                offset="10"
               >
-                Polish
-              </v-btn>
+                <template v-slot:activator="{ props }">
+                  <v-btn
+                    color="purple"
+                    variant="elevated"
+                    v-bind="props"
+                    :loading="polishLoading"
+                    :disabled="likeLoading || dislikeLoading"
+                    prepend-icon="mdi-auto-fix"
+                    class="ml-4"
+                  >
+                    Polish
+                  </v-btn>
+                </template>
+
+                <v-card min-width="400">
+                  <v-card-text>
+                    <p class="mb-2 text-grey-darken-1">Optionally, add feedback to guide the AI.</p>
+                    <v-textarea
+                      v-model="polishFeedback"
+                      label="e.g., 'Make it funnier', 'Add a call to action'"
+                      rows="3"
+                      variant="outlined"
+                      auto-grow
+                      hide-details
+                    ></v-textarea>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn text @click="closePolishMenu">Cancel</v-btn>
+                    <v-btn
+                      color="purple"
+                      variant="elevated"
+                      @click="submitPolishRequest"
+                    >
+                      Submit
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-menu>
             </v-card-actions>
           </v-card>
         </v-col>
@@ -204,35 +238,6 @@
       >
         {{ snackbarMessage }}
       </v-snackbar>
-
-      <!-- Polish Feedback Dialog -->
-      <v-dialog v-model="polishDialog" max-width="600">
-        <v-card>
-          <v-card-title>Add Feedback for Polishing</v-card-title>
-          <v-card-text>
-            <p class="mb-4">What would you like to improve or change?</p>
-            <v-textarea
-              v-model="polishFeedback"
-              label="Your feedback"
-              rows="4"
-              variant="outlined"
-              auto-grow
-            ></v-textarea>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="closePolishDialog">Cancel</v-btn>
-            <v-btn
-              color="purple"
-              variant="elevated"
-              @click="submitPolishRequest"
-              :loading="polishLoading"
-            >
-              Submit
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
     </div>
     
     <div v-else>
@@ -265,8 +270,8 @@ export default {
     const snackbarMessage = ref('');
     const snackbarColor = ref('success');
     
-    // Polish dialog state
-    const polishDialog = ref(false);
+    // Polish state
+    const polishMenuOpen = ref(false);
     const polishFeedback = ref('');
     
     const fetchIdea = async () => {
@@ -319,13 +324,8 @@ export default {
       }
     };
     
-    const openPolishDialog = () => {
-      polishFeedback.value = '';
-      polishDialog.value = true;
-    };
-    
-    const closePolishDialog = () => {
-      polishDialog.value = false;
+    const closePolishMenu = () => {
+      polishMenuOpen.value = false;
     };
     
     const submitPolishRequest = async () => {
@@ -340,7 +340,8 @@ export default {
           snackbarColor.value = 'success';
           snackbar.value = true;
           
-          closePolishDialog();
+          closePolishMenu();
+          polishFeedback.value = ''; // Clear feedback on success
         }
       } catch (err) {
         console.error('Error polishing idea:', err);
@@ -391,12 +392,11 @@ export default {
       snackbar,
       snackbarMessage,
       snackbarColor,
-      polishDialog,
+      polishMenuOpen,
       polishFeedback,
       handleLike,
       handleDislike,
-      openPolishDialog,
-      closePolishDialog,
+      closePolishMenu,
       submitPolishRequest,
       formatDate,
       getStatusColor,
