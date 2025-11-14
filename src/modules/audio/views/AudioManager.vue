@@ -12,53 +12,79 @@
           <div class="p-4">
             <form @submit.prevent="handleSubmit">
               <div class="mb-4">
-                <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title:</label>
-                <input 
-                  id="title" 
-                  v-model="audioForm.title" 
+                <v-text-field
+                  label="Title"
+                  v-model="audioForm.title"
                   placeholder="Enter title"
                   :disabled="isSubmitting"
                   required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md"
-                />
+                  variant="outlined"
+                  density="compact"
+                ></v-text-field>
               </div>
               
               <div class="mb-4">
-                <label for="audio_file" class="block text-sm font-medium text-gray-700 mb-1">Audio File(s):</label>
-                <input 
-                  type="file" 
-                  id="audio_file" 
-                  @change="handleFileUpload"
-                  multiple
+                <label
+                  for="audio-file-input"
+                  class="file-drop-zone rounded-lg"
+                  :class="{ 'is-dragging': isDragging }"
+                  @dragenter.prevent="isDragging = true"
+                  @dragover.prevent
+                  @dragleave.prevent="isDragging = false"
+                  @drop.prevent="onDrop"
+                >
+                  <div class="d-flex flex-column align-center justify-center pa-4 text-center">
+                    <v-icon size="50" class="mb-2">mdi-cloud-upload-outline</v-icon>
+                    <span>Drag and drop files here</span>
+                    <span class="text-caption my-2">or</span>
+                    <span class="text-primary font-weight-bold" style="cursor: pointer;">Browse files</span>
+                  </div>
+                </label>
+                <v-file-input
+                  id="audio-file-input"
+                  v-model="audioForm.file"
+                  scrim="primary"
+                  class="d-none"
                   accept="audio/*"
                   :disabled="isSubmitting"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md"
                 />
-                <div class="text-xs text-gray-500 mt-1">You can select multiple audio files (maximum 5)</div>
+                <div v-if="audioForm.file" class="mt-2">
+                  <v-chip
+                    size="small"
+                    label
+                    color="primary"
+                    class="me-2"
+                    closable
+                    @click:close="removeFile"
+                  >
+                    {{ audioForm.file.name }}
+                  </v-chip>
+                </div>
+                <div class="text-xs text-gray-500 mt-1">You can select one audio file</div>
               </div>
               
               <div class="mb-4">
-                <label for="transcription" class="block text-sm font-medium text-gray-700 mb-1">Transcription:</label>
-                <textarea 
-                  id="transcription" 
-                  v-model="audioForm.transcription" 
+                <v-textarea
+                  label="Transcription"
+                  v-model="audioForm.transcription"
                   rows="4"
                   :disabled="isSubmitting"
                   placeholder="Audio file transcription"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md"
-                ></textarea>
+                  variant="outlined"
+                  density="compact"
+                ></v-textarea>
               </div>
               
               <div class="mb-4">
-                <label for="ideas" class="block text-sm font-medium text-gray-700 mb-1">Ideas:</label>
-                <textarea 
-                  id="ideas" 
-                  v-model="audioForm.ideas" 
+                <v-textarea
+                  label="Ideas"
+                  disabled
+                  v-model="audioForm.ideas"
                   rows="4"
-                  :disabled="isSubmitting"
                   placeholder="Ideas and notes"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md"
-                ></textarea>
+                  variant="outlined"
+                  density="compact"
+                ></v-textarea>
                 <div class="text-xs text-gray-500 mt-1">You can use formatting</div>
               </div>
               
@@ -116,12 +142,13 @@
               <div class="flex justify-between">
                 <h3 class="text-xl font-semibold text-gray-800">{{ getAudioTitle(audio) }}</h3>
                 <div class="flex space-x-2">
-                  <button 
+                  <button
+                    v-if="['new', 'transcribing'].includes(getAudioWorkStatus(audio)) || !getAudioWorkStatus(audio)"
                     class="px-2 py-1 bg-green-600 text-white rounded-md"
                     @click="handleTranscribe(audio.documentId || audio.id)"
-                    :disabled="getAudioWorkStatus(audio) === 'transcribing'"
+                    :disabled="getAudioWorkStatus(audio) === 'transcribing' || transcribingId === (audio.documentId || audio.id)"
                   >
-                    {{ getAudioWorkStatus(audio) === 'transcribing' ? 'Transcribing...' : 'Transcribe' }}
+                    {{ (getAudioWorkStatus(audio) === 'transcribing' || transcribingId === (audio.documentId || audio.id)) ? 'Transcribing...' : 'Transcribe' }}
                   </button>
                   <button 
                     class="px-2 py-1 bg-red-600 text-white rounded-md"
@@ -140,9 +167,9 @@
                 >
                   <div class="flex items-center justify-between mb-1">
                     <div class="text-sm text-gray-600">{{ getFileName(file) }}</div>
-                    <div class="text-xs text-gray-500">{{ getFileSize(file) }} MB</div>
                   </div>
                   <audio 
+                    v-if="getAudioWorkStatus(audio) === 'new' || !getAudioWorkStatus(audio)"
                     controls
                     class="w-full"
                     :src="getBaseUrl() + getFileUrl(file)"
@@ -225,7 +252,7 @@ export default defineComponent({
       title: '',
       transcription: '',
       ideas: '',
-      files: [] as File[]
+      file: null as File | null
     });
     
     const isSubmitting = ref(false);
@@ -238,6 +265,8 @@ export default defineComponent({
     const currentDeleteId = ref<string | null>(null);
     const responseJson = ref('');
     const transcribeResponseJson = ref('');
+    const isDragging = ref(false);
+    const transcribingId = ref<string | number | null>(null);
     
     const snackbar = reactive({
       show: false,
@@ -263,12 +292,16 @@ export default defineComponent({
       return httpService.getBaseUrl();
     }
     
-    function handleFileUpload(event: Event): void {
-      const target = event.target as HTMLInputElement;
-      if (target.files) {
-        audioForm.files = Array.from(target.files);
+    const onDrop = (e: DragEvent) => {
+      isDragging.value = false;
+      if (e.dataTransfer && e.dataTransfer.files.length) {
+        audioForm.file = e.dataTransfer.files[0];
       }
-    }
+    };
+
+    const removeFile = () => {
+      audioForm.file = null;
+    };
     
     // Helper methods for direct access to audio properties (Strapi v5 format)
     function getAudioTitle(audio: any): string {
@@ -335,8 +368,8 @@ export default defineComponent({
         let uploadedFileIds: number[] = [];
         
         // Step 1: Upload files if they exist
-        if (audioForm.files && audioForm.files.length > 0) {
-          const uploadedFiles = await store.dispatch('audio/uploadFiles', audioForm.files);
+        if (audioForm.file) {
+          const uploadedFiles = await store.dispatch('audio/uploadFiles', [audioForm.file]);
           uploadedFileIds = uploadedFiles.map((file: any) => file.id);
           console.log('IDs загруженных файлов:', uploadedFileIds);
         }
@@ -360,7 +393,7 @@ export default defineComponent({
         audioForm.title = '';
         audioForm.transcription = '';
         audioForm.ideas = '';
-        audioForm.files = [];
+        audioForm.file = null;
         
         showSnackbar('Audio successfully added', 'success', 2000);
       } catch (error: any) {
@@ -414,6 +447,7 @@ export default defineComponent({
       if (!documentId) return;
       
       transcribeResponseJson.value = '';
+      transcribingId.value = documentId;
       
       try {
         const response = await store.dispatch('audio/transcribeAudioSource', documentId);
@@ -435,6 +469,8 @@ export default defineComponent({
         }
         
         showSnackbar('Error transcribing audio', 'error', 2000);
+      } finally {
+        transcribingId.value = null;
       }
     }
     
@@ -456,12 +492,15 @@ export default defineComponent({
       snackbar,
       showSnackbar,
       getBaseUrl,
-      handleFileUpload,
       handleSubmit,
       fetchAudioSources,
       handleDelete,
       handleTranscribe,
       confirmDelete,
+      isDragging,
+      onDrop,
+      removeFile,
+      transcribingId,
       // Helper methods
       getAudioTitle,
       getAudioWorkStatus,
@@ -475,3 +514,19 @@ export default defineComponent({
   }
 });
 </script>
+
+<style scoped>
+.file-drop-zone {
+  display: block;
+  border: 2px dashed #ccc;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+.file-drop-zone:hover {
+  border-color: #aaa;
+}
+.file-drop-zone.is-dragging {
+  border-color: #2196F3; /* Vuetify primary blue */
+  background-color: rgba(33, 150, 243, 0.1);
+}
+</style>
