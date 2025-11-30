@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw, NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import store from '@/core/store';
-import Home from '@/views/Home.vue';
+import homeRoutes from '@/modules/home/router';
 import authRoutes from '@/modules/auth/router';
 import ideasRoutes from '@/modules/ideas/router';
 import audioRoutes from '@/modules/audio/router';
@@ -9,12 +9,7 @@ import onboardingRoutes from '@/modules/onboarding/router';
 import brandProfileRoutes from '@/modules/brand-profile/router';
 
 const routes: Array<RouteRecordRaw> = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home,
-    meta: { requiresAuth: true },
-  },
+  ...homeRoutes,
   ...authRoutes,
   ...ideasRoutes,
   ...strategyRoutes,

@@ -3,6 +3,7 @@ import authModule from '@/modules/auth/store/auth.store';
 import ideasModule from '@/modules/ideas/store/ideas.store';
 import audioModule from '@/modules/audio/store';
 import brandProfileModule from '@/modules/brand-profile/store/brand-profile.store';
+import homeModule from '@/modules/home/store';
 import { strategyModule } from '@/modules/strategy/store/strategy.store';
 
 export interface RootState {
@@ -16,6 +17,7 @@ const store = createStore<RootState>({
     strategy: strategyModule,
     audio: audioModule,
     brandProfile: brandProfileModule,
+    home: homeModule,
   },
 });
 
