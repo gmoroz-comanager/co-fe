@@ -27,6 +27,10 @@
         <v-icon left>mdi-account-star</v-icon>
         Brand Profile
       </v-btn>
+      <v-btn to="/contacts" text>
+        <v-icon left>mdi-contacts</v-icon>
+        Contacts
+      </v-btn>
       <v-btn @click="logout" text>
         <v-icon left>mdi-logout</v-icon>
         Logout

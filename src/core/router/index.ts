@@ -7,6 +7,7 @@ import audioRoutes from '@/modules/audio/router';
 import strategyRoutes from '@/modules/strategy/router';
 import onboardingRoutes from '@/modules/onboarding/router';
 import brandProfileRoutes from '@/modules/brand-profile/router';
+import contactsRoutes from '@/modules/contacts/router';
 
 const routes: Array<RouteRecordRaw> = [
   ...homeRoutes,
@@ -15,6 +16,7 @@ const routes: Array<RouteRecordRaw> = [
   ...strategyRoutes,
   ...audioRoutes,
   ...brandProfileRoutes,
+  ...contactsRoutes,
   ...onboardingRoutes,
 ];
 

@@ -5,6 +5,7 @@ import audioModule from '@/modules/audio/store';
 import brandProfileModule from '@/modules/brand-profile/store/brand-profile.store';
 import homeModule from '@/modules/home/store';
 import { strategyModule } from '@/modules/strategy/store/strategy.store';
+import contactsModule from '@/modules/contacts/store';
 
 export interface RootState {
   // Define root state properties here if any
@@ -18,6 +19,7 @@ const store = createStore<RootState>({
     audio: audioModule,
     brandProfile: brandProfileModule,
     home: homeModule,
+    contacts: contactsModule,
   },
 });
 
