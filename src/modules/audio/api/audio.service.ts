@@ -18,6 +18,13 @@ export interface AudioSource {
   external_transcription_id?: string;
   work_status?: string;
   audio_file?: AudioFile[] | { data: AudioFile[] };
+  transcript_structure?: Array<{
+    speaker: string;
+    start: number;
+    end: number;
+    words: string[];
+  }>;
+  speakers?: Record<string, any>;
 }
 
 export interface AudioSourcesResponse {
@@ -85,6 +92,21 @@ class AudioService {
       return response.data;
     } catch (error) {
       console.error('Error creating audio source:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update an audio source
+   */
+  async updateAudioSource(documentId: string, data: Partial<AudioSource>): Promise<AudioSourceResponse> {
+    try {
+      const response = await httpService.put<AudioSourceResponse>(`/audio-sources/${documentId}`, {
+        data: data
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating audio source:', error);
       throw error;
     }
   }

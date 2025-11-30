@@ -189,9 +189,28 @@
                 </div>
               </div>
               
-              <div v-if="getAudioTranscription(audio)" class="mt-4 pt-3 border-t border-gray-100">
+              <div v-if="audio.transcript_structure && audio.transcript_structure.length > 0" class="mt-4 pt-3 border-t border-gray-100">
                 <h4 class="text-sm font-medium text-gray-700 mb-2">Transcription:</h4>
-                <p class="text-gray-600 text-sm">{{ getAudioTranscription(audio) }}</p>
+                
+                <SpeakerMapper 
+                  :transcript-structure="audio.transcript_structure"
+                  :speakers-map="audio.speakers || {}"
+                  @update:speakersMap="(newMap) => handleUpdateSpeakers(audio, newMap)"
+                />
+
+                <div class="space-y-2 mt-4">
+                  <div v-for="(segment, idx) in audio.transcript_structure" :key="idx" class="text-sm text-gray-600">
+                    <span class="font-bold text-blue-800 mr-1">
+                      {{ getSpeakerName(segment.speaker, audio.speakers) }}:
+                    </span>
+                    <span>{{ segment.words.join(' ') }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div v-else-if="getAudioTranscription(audio)" class="mt-4 pt-3 border-t border-gray-100">
+                <h4 class="text-sm font-medium text-gray-700 mb-2">Transcription:</h4>
+                <p class="text-gray-600 text-sm whitespace-pre-wrap">{{ getAudioTranscription(audio) }}</p>
               </div>
               
               <div v-if="getAudioIdeas(audio)" class="mt-4 pt-3 border-t border-gray-100">
@@ -251,9 +270,13 @@
 import { defineComponent, ref, reactive, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
 import httpService from '@/core/api/http';
+import SpeakerMapper from './components/SpeakerMapper.vue';
 
 export default defineComponent({
   name: 'AudioManager',
+  components: {
+    SpeakerMapper
+  },
   
   setup() {
     // Store
@@ -486,6 +509,27 @@ export default defineComponent({
         transcribingId.value = null;
       }
     }
+
+    async function handleUpdateSpeakers(audio: any, newMap: any) {
+      try {
+        await store.dispatch('audio/updateAudioSource', {
+          documentId: audio.documentId || audio.id,
+          data: { speakers: newMap }
+        });
+        showSnackbar('Speaker mapping updated', 'success', 1000);
+      } catch (e) {
+        console.error(e);
+        showSnackbar('Failed to update speakers', 'error');
+      }
+    }
+
+    function getSpeakerName(speakerLabel: string, speakersMap: any): string {
+      if (!speakersMap || !speakersMap[speakerLabel]) return `${speakerLabel}`;
+      const mapping = speakersMap[speakerLabel];
+      if (mapping.type === 'me') return 'Me';
+      if (mapping.type === 'contact') return mapping.name || 'Unknown Contact';
+      return `${speakerLabel}`;
+    }
     
     // Mount
     onMounted(() => {
@@ -523,7 +567,9 @@ export default defineComponent({
       getAudioFiles,
       getFileName,
       getFileUrl,
-      getFileSize
+      getFileSize,
+      handleUpdateSpeakers,
+      getSpeakerName
     };
   }
 });

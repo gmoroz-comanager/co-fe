@@ -97,6 +97,16 @@ const audioModule: Module<AudioState, any> = {
         throw error;
       }
     },
+
+    async updateAudioSource({ dispatch }, { documentId, data }) {
+      try {
+        const response = await audioService.updateAudioSource(documentId, data);
+        await dispatch('fetchAudioSources');
+        return response;
+      } catch (error) {
+        throw error;
+      }
+    },
     
     async uploadFiles(_, files: File[]) {
       try {
