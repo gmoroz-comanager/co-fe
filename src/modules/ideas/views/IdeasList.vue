@@ -9,7 +9,7 @@
     <!-- Filters Section -->
     <v-row>
       <v-col cols="12">
-        <v-card class="mb-6">
+        <v-card class="mb-6" :loading="backgroundLoading">
           <v-card-title>
             Filters
             <v-spacer></v-spacer>
@@ -126,17 +126,17 @@
       </v-col>
     </v-row>
 
+    <!-- Error State -->
+    <v-row v-if="error">
+      <v-col cols="12">
+        <v-alert type="error" closable @click:close="clearError">{{ error }}</v-alert>
+      </v-col>
+    </v-row>
+
     <!-- Loading State -->
     <v-row v-if="loading">
       <v-col cols="12" class="text-center">
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
-      </v-col>
-    </v-row>
-
-    <!-- Error State -->
-    <v-row v-else-if="error">
-      <v-col cols="12">
-        <v-alert type="error">{{ error }}</v-alert>
       </v-col>
     </v-row>
 
@@ -278,6 +278,7 @@ export default defineComponent({
     // Computed
     const ideas = computed(() => store.getters['ideas/allIdeas']);
     const loading = computed(() => store.getters['ideas/isLoading']);
+    const backgroundLoading = computed(() => store.getters['ideas/isBackgroundLoading']);
     const error = computed(() => store.state.ideas.error);
     const filters = computed(() => store.getters['ideas/filters']);
     const pagination = computed(() => store.getters['ideas/pagination']);
@@ -312,6 +313,10 @@ export default defineComponent({
     const debouncedSearch = debounce(() => {
       applyFilters();
     }, 500);
+
+    const clearError = () => {
+      store.commit('ideas/SET_ERROR', null);
+    };
     
     const resetFilters = () => {
       startDate.value = null;
@@ -446,10 +451,12 @@ export default defineComponent({
       updateEndDate,
       clearStartDate,
       clearEndDate,
+      clearError,
       formatDate,
       getStatusColor,
       parseTags,
-      truncateText
+      truncateText,
+      backgroundLoading
     };
   }
 });

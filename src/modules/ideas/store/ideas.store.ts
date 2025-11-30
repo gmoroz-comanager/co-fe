@@ -7,6 +7,7 @@ export interface IdeasState {
   totalIdeas: number;
   newIdeas: number;
   loading: boolean;
+  backgroundLoading: boolean;
   error: string | null;
   filters: IdeaFilters;
   pagination: {
@@ -26,6 +27,7 @@ const ideasModule: Module<IdeasState, any> = {
     totalIdeas: 0,
     newIdeas: 0,
     loading: false,
+    backgroundLoading: false,
     error: null,
     filters: {
       sort: 'createdAt:desc',
@@ -47,6 +49,7 @@ const ideasModule: Module<IdeasState, any> = {
     totalIdeas: (state): number => state.totalIdeas,
     newIdeas: (state): number => state.newIdeas,
     isLoading: (state): boolean => state.loading,
+    isBackgroundLoading: (state): boolean => state.backgroundLoading,
     filters: (state): IdeaFilters => state.filters,
     pagination: (state): any => state.pagination
   },
@@ -72,6 +75,10 @@ const ideasModule: Module<IdeasState, any> = {
       state.loading = loading;
     },
     
+    SET_BACKGROUND_LOADING(state, loading: boolean) {
+      state.backgroundLoading = loading;
+    },
+    
     SET_ERROR(state, error: string | null) {
       state.error = error;
     },
@@ -87,7 +94,11 @@ const ideasModule: Module<IdeasState, any> = {
   
   actions: {
     async fetchIdeas({ commit, state }) {
-      commit('SET_LOADING', true);
+      if (state.ideas.length > 0) {
+        commit('SET_BACKGROUND_LOADING', true);
+      } else {
+        commit('SET_LOADING', true);
+      }
       commit('SET_ERROR', null);
       
       try {
@@ -108,6 +119,7 @@ const ideasModule: Module<IdeasState, any> = {
         throw error;
       } finally {
         commit('SET_LOADING', false);
+        commit('SET_BACKGROUND_LOADING', false);
       }
     },
     
