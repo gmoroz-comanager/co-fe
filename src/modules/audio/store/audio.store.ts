@@ -5,6 +5,7 @@ export interface AudioState {
   audioSources: AudioSource[];
   currentAudio: AudioSource | null;
   loading: boolean;
+  backgroundLoading: boolean;
   error: string | null;
 }
 
@@ -15,6 +16,7 @@ const audioModule: Module<AudioState, any> = {
     audioSources: [],
     currentAudio: null,
     loading: false,
+    backgroundLoading: false,
     error: null
   }),
   
@@ -22,6 +24,7 @@ const audioModule: Module<AudioState, any> = {
     audioSources: (state): AudioSource[] => state.audioSources,
     currentAudio: (state): AudioSource | null => state.currentAudio,
     isLoading: (state): boolean => state.loading,
+    isBackgroundLoading: (state): boolean => state.backgroundLoading,
     error: (state): string | null => state.error
   },
   
@@ -38,14 +41,22 @@ const audioModule: Module<AudioState, any> = {
       state.loading = loading;
     },
     
+    SET_BACKGROUND_LOADING(state, loading: boolean) {
+      state.backgroundLoading = loading;
+    },
+    
     SET_ERROR(state, error: string | null) {
       state.error = error;
     }
   },
   
   actions: {
-    async fetchAudioSources({ commit }) {
-      commit('SET_LOADING', true);
+    async fetchAudioSources({ commit, state }) {
+      if (state.audioSources.length > 0) {
+        commit('SET_BACKGROUND_LOADING', true);
+      } else {
+        commit('SET_LOADING', true);
+      }
       commit('SET_ERROR', null);
       
       try {
@@ -57,6 +68,7 @@ const audioModule: Module<AudioState, any> = {
         throw error;
       } finally {
         commit('SET_LOADING', false);
+        commit('SET_BACKGROUND_LOADING', false);
       }
     },
     

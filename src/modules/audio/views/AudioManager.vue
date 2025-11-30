@@ -116,21 +116,28 @@
         <div class="bg-white rounded-lg shadow-md p-4 mb-6">
           <div class="flex justify-between items-center mb-4">
             <h2 class="text-xl font-semibold text-gray-800">Your Audio Files</h2>
-            <button 
+            <button
               class="px-4 py-2 bg-blue-600 text-white font-medium rounded-md"
-              :disabled="loading" 
+              :disabled="loading || backgroundLoading"
               @click="fetchAudioSources"
             >
-              {{ loading ? 'Loading...' : 'Refresh' }}
+              {{ (loading || backgroundLoading) ? 'Loading...' : 'Refresh' }}
             </button>
           </div>
           
-          <div v-if="!loading && !audioSources.length" class="text-center py-8">
-            <p>No audio files yet</p>
-          </div>
-          
-          <div v-else-if="loading" class="text-center py-8">
+          <v-progress-linear
+            v-if="backgroundLoading"
+            indeterminate
+            color="primary"
+            class="mb-4"
+          ></v-progress-linear>
+
+          <div v-if="loading" class="text-center py-8">
             <p>Loading...</p>
+          </div>
+
+          <div v-else-if="!audioSources.length" class="text-center py-8">
+            <p>No audio files yet</p>
           </div>
           
           <div v-else class="space-y-6">
@@ -283,6 +290,7 @@ export default defineComponent({
     // Computed
     const audioSources = computed(() => store.getters['audio/audioSources']);
     const loading = computed(() => store.getters['audio/isLoading']);
+    const backgroundLoading = computed(() => store.getters['audio/isBackgroundLoading']);
     const error = computed(() => store.state.audio.error);
     
     // Methods
@@ -488,6 +496,7 @@ export default defineComponent({
       audioForm,
       isSubmitting,
       loading,
+      backgroundLoading,
       isDeleting,
       dialogVisible,
       dialogConfig,
