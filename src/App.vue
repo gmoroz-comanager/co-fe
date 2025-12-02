@@ -31,6 +31,10 @@
         <v-icon left>mdi-contacts</v-icon>
         Contacts
       </v-btn>
+      <v-btn to="/posting/setup" text>
+        <v-icon left>mdi-send</v-icon>
+        Posting
+      </v-btn>
       <v-btn @click="logout" text>
         <v-icon left>mdi-logout</v-icon>
         Logout

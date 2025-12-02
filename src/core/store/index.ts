@@ -6,6 +6,7 @@ import brandProfileModule from '@/modules/brand-profile/store/brand-profile.stor
 import homeModule from '@/modules/home/store';
 import { strategyModule } from '@/modules/strategy/store/strategy.store';
 import contactsModule from '@/modules/contacts/store';
+import postingModule from '@/modules/posting/store';
 
 export interface RootState {
   // Define root state properties here if any
@@ -20,6 +21,7 @@ const store = createStore<RootState>({
     brandProfile: brandProfileModule,
     home: homeModule,
     contacts: contactsModule,
+    posting: postingModule,
   },
 });
 

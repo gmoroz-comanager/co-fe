@@ -225,10 +225,59 @@
                   </v-card-actions>
                 </v-card>
               </v-menu>
+
+              <!-- Post to Telegram Button -->
+              <v-btn
+                v-if="idea.polishedBody"
+                color="blue"
+                variant="elevated"
+                prepend-icon="mdi-send"
+                class="ml-2"
+                @click="openPostDialog"
+                :loading="publishing"
+              >
+                Post to TG
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
+
+      <!-- Telegram Post Dialog -->
+      <v-dialog v-model="postDialogOpen" max-width="500">
+        <v-card>
+          <v-card-title>Post to Telegram</v-card-title>
+          <v-card-text>
+            <p class="mb-4">Select a channel to post this idea.</p>
+            <v-select
+              v-model="selectedChannelId"
+              :items="channels"
+              item-title="title"
+              item-value="documentId"
+              label="Select Channel"
+              variant="outlined"
+              :loading="channelsLoading"
+              no-data-text="No channels found"
+            ></v-select>
+            <div v-if="channels.length === 0 && !channelsLoading" class="text-caption text-red mt-2">
+               No channels found. <router-link to="/posting/setup">Setup Telegram</router-link>
+            </div>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn text @click="postDialogOpen = false">Cancel</v-btn>
+            <v-btn 
+              color="blue" 
+              variant="elevated"
+              @click="postToTelegram" 
+              :loading="publishing" 
+              :disabled="!selectedChannelId"
+            >
+              Post
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
 
       <!-- Snackbar for feedback -->
       <v-snackbar
@@ -247,9 +296,11 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
+import { useStore } from 'vuex';
 import { ideasService } from '../api/ideas.service';
+import { postingService } from '../../posting/api/posting.service';
 
 export default {
   name: 'IdeaDetail',
@@ -273,6 +324,46 @@ export default {
     // Polish state
     const polishMenuOpen = ref(false);
     const polishFeedback = ref('');
+
+    // Telegram Posting
+    const postDialogOpen = ref(false);
+    const selectedChannelId = ref(null);
+    const publishing = ref(false);
+    const store = useStore();
+    
+    const channels = computed(() => store.getters['posting/channels']);
+    const channelsLoading = computed(() => store.getters['posting/isLoading']);
+
+    const openPostDialog = () => {
+      postDialogOpen.value = true;
+      store.dispatch('posting/fetchChannels');
+    };
+
+    const postToTelegram = async () => {
+      if (!idea.value || !selectedChannelId.value) return;
+      
+      publishing.value = true;
+      try {
+        const result = await postingService.publishIdea(idea.value.documentId, selectedChannelId.value);
+        
+        snackbarMessage.value = 'Posted to Telegram successfully!';
+        snackbarColor.value = 'success';
+        snackbar.value = true;
+        postDialogOpen.value = false;
+        
+        if (result.url) {
+            // Optional: open the message
+             window.open(result.url, '_blank');
+        }
+      } catch (err) {
+        console.error('Error posting to Telegram:', err);
+        snackbarMessage.value = err.response?.data?.error?.message || 'Failed to post to Telegram';
+        snackbarColor.value = 'error';
+        snackbar.value = true;
+      } finally {
+        publishing.value = false;
+      }
+    };
     
     const fetchIdea = async () => {
       loading.value = true;
@@ -394,6 +485,13 @@ export default {
       snackbarColor,
       polishMenuOpen,
       polishFeedback,
+      postDialogOpen,
+      selectedChannelId,
+      publishing,
+      channels,
+      channelsLoading,
+      openPostDialog,
+      postToTelegram,
       handleLike,
       handleDislike,
       closePolishMenu,
