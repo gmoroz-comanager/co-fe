@@ -31,9 +31,13 @@
         <v-icon left>mdi-contacts</v-icon>
         Contacts
       </v-btn>
+      <v-btn to="/posting/calendar" text>
+        <v-icon left>mdi-calendar-clock</v-icon>
+        Schedule
+      </v-btn>
       <v-btn to="/posting/setup" text>
-        <v-icon left>mdi-send</v-icon>
-        Posting
+        <v-icon left>mdi-cog</v-icon>
+        Posting Setup
       </v-btn>
       <v-btn @click="logout" text>
         <v-icon left>mdi-logout</v-icon>

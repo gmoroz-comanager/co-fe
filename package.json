@@ -9,6 +9,11 @@
     "start": "vue-cli-service serve --mode production"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6.1.19",
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
+    "@fullcalendar/vue3": "^6.1.19",
     "@mdi/font": "^7.4.47",
     "@types/marked": "^5.0.2",
     "@vueuse/core": "^9.1.0",
