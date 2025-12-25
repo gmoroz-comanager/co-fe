@@ -18,29 +18,31 @@ export interface IdeasState {
   };
 }
 
+const getDefaultState = (): IdeasState => ({
+  ideas: [],
+  currentIdea: null,
+  totalIdeas: 0,
+  newIdeas: 0,
+  loading: false,
+  backgroundLoading: false,
+  error: null,
+  filters: {
+    sort: 'createdAt:desc',
+    page: 1,
+    pageSize: 10
+  },
+  pagination: {
+    page: 1,
+    pageSize: 10,
+    total: 0,
+    pageCount: 0
+  }
+});
+
 const ideasModule: Module<IdeasState, any> = {
   namespaced: true,
   
-  state: (): IdeasState => ({
-    ideas: [],
-    currentIdea: null,
-    totalIdeas: 0,
-    newIdeas: 0,
-    loading: false,
-    backgroundLoading: false,
-    error: null,
-    filters: {
-      sort: 'createdAt:desc',
-      page: 1,
-      pageSize: 10
-    },
-    pagination: {
-      page: 1,
-      pageSize: 10,
-      total: 0,
-      pageCount: 0
-    }
-  }),
+  state: getDefaultState,
   
   getters: {
     allIdeas: (state): Idea[] => state.ideas,
@@ -89,6 +91,10 @@ const ideasModule: Module<IdeasState, any> = {
     
     SET_PAGINATION(state, pagination: any) {
       state.pagination = pagination;
+    },
+
+    RESET_STATE(state) {
+      Object.assign(state, getDefaultState());
     }
   },
   

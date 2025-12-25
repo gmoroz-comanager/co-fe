@@ -105,6 +105,8 @@ const authModule: Module<AuthState, any> = {
     logout({ commit }) {
       authService.logout();
       commit('LOGOUT');
+      // Force reload to clear all memory state (Vuex) to prevent data leakage between sessions
+      window.location.href = '/login';
     },
     
     checkAuth({ commit }) {
