@@ -3,6 +3,73 @@
     <v-row align="center" justify="center">
       <v-col cols="12" sm="10" md="8" lg="6">
         <v-card class="pa-8 text-center" elevation="3">
+          
+          <!-- Upload State (Initial) -->
+          <div v-if="!isProcessing && !uploadSuccess && !errorMessage">
+            <v-icon size="80" color="primary" class="mb-4">
+              mdi-file-upload
+            </v-icon>
+            
+            <v-card-title class="text-h4 mb-4 justify-center">
+              Upload LinkedIn Profile
+            </v-card-title>
+            
+            <v-card-subtitle class="text-body-1 mb-6">
+              Upload your LinkedIn profile PDF to generate your brand persona.
+            </v-card-subtitle>
+
+            <v-file-input
+              v-model="selectedFile"
+              accept=".pdf"
+              label="Select PDF file"
+              variant="outlined"
+              prepend-icon="mdi-file-pdf-box"
+              show-size
+              truncate-length="15"
+              class="mb-4"
+              :error-messages="fileError"
+            ></v-file-input>
+
+            <v-btn
+              block
+              size="large"
+              color="primary"
+              @click="uploadFile"
+              :disabled="!selectedFile"
+              class="mb-4"
+            >
+              Upload & Analyze
+            </v-btn>
+
+            <div class="d-flex justify-center align-center mb-4">
+               <v-divider></v-divider>
+               <span class="mx-4 text-grey">OR</span>
+               <v-divider></v-divider>
+            </div>
+
+            <v-btn
+              block
+              size="large"
+              variant="text"
+              color="grey"
+              @click="skipOnboarding"
+            >
+              Skip Onboarding
+            </v-btn>
+            
+             <v-btn
+              block
+              size="large"
+              variant="text"
+              color="error"
+              class="mt-2"
+              @click="handleLogout"
+            >
+              Logout
+            </v-btn>
+
+          </div>
+
           <!-- Processing State -->
           <div v-if="isProcessing && !uploadSuccess && !errorMessage">
             <v-icon size="80" color="primary" class="mb-4">
@@ -52,7 +119,7 @@
             </v-icon>
             
             <v-card-title class="text-h5 mb-4 justify-center">
-              Profile Not Ready
+              Analysis Failed
             </v-card-title>
             
             <v-alert
@@ -62,10 +129,6 @@
             >
               {{ errorMessage }}
             </v-alert>
-
-            <v-card-subtitle class="text-body-2 mb-6">
-              Administrator needs to upload your LinkedIn PDF to the system. Please contact the exhibition organizers.
-            </v-card-subtitle>
 
             <v-row>
               <v-col cols="12" sm="6">
@@ -83,9 +146,20 @@
                   block
                   size="large"
                   color="primary"
-                  @click="retryProcessing"
+                  @click="resetState"
                 >
                   Try Again
+                </v-btn>
+              </v-col>
+               <v-col cols="12" class="mt-2">
+                <v-btn
+                  block
+                  size="large"
+                  variant="text"
+                  color="grey"
+                  @click="skipOnboarding"
+                >
+                  Skip Onboarding
                 </v-btn>
               </v-col>
             </v-row>
@@ -111,38 +185,79 @@ export default defineComponent({
     const isProcessing = ref(false);
     const uploadSuccess = ref(false);
     const errorMessage = ref('');
+    const selectedFile = ref<File | null>(null);
+    const fileError = ref('');
 
-    const processProfile = async () => {
+    // Check if we should try legacy processing (admin uploaded) on mount?
+    // Actually, let's not auto-start. Let the user choose.
+    
+    const uploadFile = async () => {
+      if (!selectedFile.value) {
+        fileError.value = 'Please select a file';
+        return;
+      }
+      if (Array.isArray(selectedFile.value)) {
+         selectedFile.value = selectedFile.value[0];
+      }
+
       isProcessing.value = true;
-      uploadSuccess.value = false;
       errorMessage.value = '';
+      fileError.value = '';
 
       try {
-        const response = await onboardingService.processProfile();
+        const response = await onboardingService.uploadLinkedInPdf(selectedFile.value as File);
         
         if (response.success) {
           uploadSuccess.value = true;
-          
-          // Update user data in store
           await store.dispatch('auth/refreshUser');
-          
-          // Redirect after a short delay
           setTimeout(() => {
             router.push({ name: 'Home' });
           }, 2000);
         } else {
-          errorMessage.value = 'Failed to process profile. Please try again later.';
+            errorMessage.value = response.message || 'Analysis failed.';
         }
       } catch (error: any) {
-        console.error('Processing error:', error);
-        errorMessage.value = error.response?.data?.error || 'PDF file has not been uploaded by administrator yet.';
+        console.error('Upload error:', error);
+        errorMessage.value = error.response?.data?.error || 'Failed to upload and analyze PDF.';
       } finally {
         isProcessing.value = false;
       }
     };
+    
+    const resetState = () => {
+        errorMessage.value = '';
+        selectedFile.value = null;
+    };
 
-    const retryProcessing = () => {
-      processProfile();
+    const processProfileLegacy = async () => {
+      // Legacy auto-check for admin uploaded files
+      isProcessing.value = true;
+      try {
+        const response = await onboardingService.processProfile();
+        if (response.success) {
+             uploadSuccess.value = true;
+             await store.dispatch('auth/refreshUser');
+             setTimeout(() => { router.push({ name: 'Home' }); }, 2000);
+        }
+      } catch (e) {
+          // If legacy fails, we just show the upload form, no error displayed yet.
+          // Unless explicitly triggered.
+      } finally {
+          isProcessing.value = false;
+      }
+    };
+
+    const skipOnboarding = async () => {
+      isProcessing.value = true;
+      try {
+        await onboardingService.skipStage1();
+        await store.dispatch('auth/refreshUser');
+        router.push({ name: 'Home' });
+      } catch (error) {
+        console.error('Skip error:', error);
+        errorMessage.value = 'Failed to skip onboarding.';
+        isProcessing.value = false;
+      }
     };
 
     const handleLogout = () => {
@@ -150,17 +265,22 @@ export default defineComponent({
       router.push({ name: 'Login' });
     };
 
-    // Auto-start processing on mount
     onMounted(() => {
-      processProfile();
+        // Optional: Check if admin already uploaded something? 
+        // For now, let's default to showing the form.
+        // processProfileLegacy(); 
     });
 
     return {
       isProcessing,
       uploadSuccess,
       errorMessage,
-      retryProcessing,
+      selectedFile,
+      fileError,
+      uploadFile,
+      resetState,
       handleLogout,
+      skipOnboarding,
     };
   },
 });

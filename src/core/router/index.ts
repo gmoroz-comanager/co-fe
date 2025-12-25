@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw, NavigationGuardNext, RouteLocationNormalized } from 'vue-router';
 import store from '@/core/store';
+import { getOnboardingRedirect } from '@/core/helpers/onboarding';
 import homeRoutes from '@/modules/home/router';
 import authRoutes from '@/modules/auth/router';
 import ideasRoutes from '@/modules/ideas/router';
@@ -45,13 +46,9 @@ router.beforeEach((to: RouteLocationNormalized, from: RouteLocationNormalized, n
   const isOnboardingRoute = to.matched.some(record => record.meta.isOnboarding);
   
   if (isLoggedIn && !isAuthRoute && !isOnboardingRoute) {
-    // Check if user needs to complete onboarding
-    if (currentUser && currentUser.id && !currentUser.finishedOnboardingStage1) {
-      return next('/onboarding/stage1');
-    }
-    // Redirect to stage 2 if stage 1 is done but onboarding is not complete
-    else if (currentUser && currentUser.id && !currentUser.onboardingComplete) {
-      return next('/onboarding/stage2');
+    const redirectPath = getOnboardingRedirect(currentUser, false);
+    if (redirectPath) {
+      return next(redirectPath);
     }
   }
   

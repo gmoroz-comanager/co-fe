@@ -33,11 +33,10 @@
             
             <v-text-field
               v-model="user.linkedinUrl"
-              label="LinkedIn URL"
+              label="LinkedIn URL (Optional)"
               variant="outlined"
               :disabled="loading"
               placeholder="https://www.linkedin.com/in/yourprofile"
-              required
               :rules="linkedinRules"
               class="mb-4"
             ></v-text-field>
@@ -131,8 +130,7 @@ export default {
       error: null,
       showPassword: false,
       linkedinRules: [
-        (v) => !!v || 'LinkedIn URL is required',
-        (v) => (v && v.includes('linkedin.com')) || 'Please provide a valid LinkedIn URL'
+        (v) => !v || v.includes('linkedin.com') || 'Please provide a valid LinkedIn URL'
       ],
       snackbar: {
         show: false,
@@ -162,12 +160,16 @@ export default {
       
       this.$store.dispatch('auth/register', this.user)
         .then((response) => {
-          // Show success message - user needs to wait for admin activation (10 seconds)
+          // Show success message
           this.showSnackbar(
-            response.message || 'Registration successful! Your account is pending activation.',
+            response.message || 'Registration successful! Please login.',
             'success',
-            10000
+            3000
           )
+          // Redirect to login after short delay
+          setTimeout(() => {
+            this.$router.push('/login')
+          }, 1500)
         })
         .catch(err => {
           console.error(err)
