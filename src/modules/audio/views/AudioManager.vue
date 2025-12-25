@@ -61,6 +61,29 @@
                   </v-chip>
                 </div>
                 <div class="text-xs text-gray-500 mt-1">You can select one audio file</div>
+                
+                <!-- Upload Progress -->
+                <div v-if="uploadProgress > 0 && uploadProgress < 100" class="mt-3">
+                  <div class="flex justify-between text-xs mb-1">
+                    <span>Uploading...</span>
+                    <span>{{ uploadProgress }}%</span>
+                  </div>
+                  <v-progress-linear
+                    v-model="uploadProgress"
+                    color="primary"
+                    height="6"
+                    rounded
+                  ></v-progress-linear>
+                </div>
+
+                <!-- Upload Error -->
+                <div v-if="uploadError" class="mt-3 bg-red-50 text-red-700 p-3 rounded text-sm flex items-start">
+                   <v-icon color="red" size="small" class="mr-2 mt-0.5">mdi-alert-circle</v-icon>
+                   <div>
+                     <p class="font-medium">Upload failed</p>
+                     <p>{{ uploadError }}</p>
+                   </div>
+                </div>
               </div>
               
               <div class="mb-4">
@@ -293,6 +316,8 @@ export default defineComponent({
     const isSubmitting = ref(false);
     const isDeleting = ref(false);
     const dialogVisible = ref(false);
+    const uploadProgress = ref(0);
+    const uploadError = ref<string | null>(null);
     const dialogConfig = reactive({
       title: '',
       message: ''
@@ -399,15 +424,30 @@ export default defineComponent({
       
       isSubmitting.value = true;
       responseJson.value = '';
+      uploadProgress.value = 0;
+      uploadError.value = null;
       
       try {
         let uploadedFileIds: number[] = [];
         
         // Step 1: Upload files if they exist
         if (audioForm.file) {
-          const uploadedFiles = await store.dispatch('audio/uploadFiles', [audioForm.file]);
-          uploadedFileIds = uploadedFiles.map((file: any) => file.id);
-          console.log('IDs загруженных файлов:', uploadedFileIds);
+          try {
+            const uploadedFiles = await store.dispatch('audio/uploadFiles', {
+              files: [audioForm.file],
+              onUploadProgress: (progressEvent: any) => {
+                if (progressEvent.total) {
+                  uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                }
+              }
+            });
+            uploadedFileIds = uploadedFiles.map((file: any) => file.id);
+            console.log('IDs загруженных файлов:', uploadedFileIds);
+          } catch (uploadErr: any) {
+            console.error('Upload error:', uploadErr);
+            uploadError.value = 'Failed to upload file. Please check your connection and try again.';
+            throw uploadErr; // Re-throw to be caught by outer catch
+          }
         }
         
         // Step 2: Create audio source with file references
@@ -430,6 +470,7 @@ export default defineComponent({
         audioForm.transcription = '';
         audioForm.ideas = '';
         audioForm.file = null;
+        uploadProgress.value = 0;
         
         showSnackbar('Audio successfully added', 'success', 2000);
       } catch (error: any) {
@@ -439,7 +480,10 @@ export default defineComponent({
         } else {
           responseJson.value = JSON.stringify(error.message, null, 2);
         }
-        showSnackbar('Error creating audio file. See details below.', 'error', 2000);
+        
+        if (!uploadError.value) {
+             showSnackbar('Error creating audio file. See details below.', 'error', 2000);
+        }
       } finally {
         isSubmitting.value = false;
       }
@@ -569,7 +613,9 @@ export default defineComponent({
       getFileUrl,
       getFileSize,
       handleUpdateSpeakers,
-      getSpeakerName
+      getSpeakerName,
+      uploadProgress,
+      uploadError
     };
   }
 });

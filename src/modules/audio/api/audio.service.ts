@@ -139,7 +139,7 @@ class AudioService {
   /**
    * Upload files to the media library
    */
-  async uploadFiles(files: File[]): Promise<any[]> {
+  async uploadFiles(files: File[], onUploadProgress?: (progressEvent: any) => void): Promise<any[]> {
     try {
       const formData = new FormData();
       
@@ -147,7 +147,9 @@ class AudioService {
         formData.append('files', files[i]);
       }
       
-      const response = await httpService.upload('/upload', formData);
+      const response = await httpService.upload('/upload', formData, {
+        onUploadProgress
+      });
       return response.data;
     } catch (error) {
       console.error('Error uploading files:', error);

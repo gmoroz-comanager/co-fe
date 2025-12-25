@@ -108,9 +108,19 @@ const audioModule: Module<AudioState, any> = {
       }
     },
     
-    async uploadFiles(_, files: File[]) {
+    async uploadFiles(_, payload: File[] | { files: File[], onUploadProgress?: (progressEvent: any) => void }) {
+      let files: File[];
+      let onUploadProgress: ((progressEvent: any) => void) | undefined;
+
+      if (Array.isArray(payload)) {
+        files = payload;
+      } else {
+        files = payload.files;
+        onUploadProgress = payload.onUploadProgress;
+      }
+
       try {
-        return await audioService.uploadFiles(files);
+        return await audioService.uploadFiles(files, onUploadProgress);
       } catch (error) {
         throw error;
       }
