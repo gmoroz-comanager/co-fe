@@ -35,22 +35,39 @@
         <v-btn 
           color="error" 
           variant="text" 
-          :loading="deleting"
-          @click="onDelete"
+          @click="showDeleteConfirm = true"
         >
           Delete Post
         </v-btn>
       </v-card-actions>
     </v-card>
+    
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmationDialog
+      v-model="showDeleteConfirm"
+      title="Delete Scheduled Post"
+      message="Are you sure you want to delete this scheduled post? This action cannot be undone."
+      confirm-text="Delete"
+      confirm-color="error"
+      icon="mdi-delete-alert"
+      icon-color="error"
+      :loading="deleting"
+      @confirm="confirmDelete"
+    />
   </v-dialog>
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, computed, PropType } from 'vue';
 import { CalendarEvent } from '../composables/useCalendarEvents';
+import { ConfirmationDialog } from '@/core/components';
 
 export default defineComponent({
   name: 'PostDetailsDialog',
+  
+  components: {
+    ConfirmationDialog,
+  },
   
   props: {
     modelValue: {
@@ -71,22 +88,14 @@ export default defineComponent({
   
   setup(props, { emit }) {
     const deleting = ref(false);
+    const showDeleteConfirm = ref(false);
     
     // Format the event time for display
     const formattedTime = computed(() => {
       const timestamp = props.event?.start;
       if (!timestamp) return 'Not set';
       
-      let date: Date;
-      if (typeof timestamp === 'number') {
-        date = new Date(timestamp);
-      } else if (timestamp instanceof Date) {
-        date = timestamp;
-      } else if (typeof timestamp === 'string') {
-        date = new Date(timestamp);
-      } else {
-        return 'Invalid time';
-      }
+      const date = new Date(timestamp);
       
       if (isNaN(date.getTime())) return 'Invalid Date';
       
@@ -105,14 +114,14 @@ export default defineComponent({
       return props.getStatusColor(props.event?.extendedProps?.status);
     });
     
-    // Handle delete
-    const onDelete = async () => {
+    // Handle delete confirmation
+    const confirmDelete = async () => {
       if (!props.event) return;
-      if (!confirm('Are you sure you want to delete this scheduled post?')) return;
       
       deleting.value = true;
       try {
         emit('delete', props.event.id);
+        showDeleteConfirm.value = false;
       } finally {
         deleting.value = false;
       }
@@ -120,9 +129,10 @@ export default defineComponent({
     
     return {
       deleting,
+      showDeleteConfirm,
       formattedTime,
       statusColor,
-      onDelete,
+      confirmDelete,
     };
   },
 });

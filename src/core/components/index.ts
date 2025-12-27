@@ -1,8 +1,10 @@
 import BaseButton from './BaseButton.vue';
+import ConfirmationDialog from './ConfirmationDialog.vue';
 
 // Export components
 export {
-  BaseButton
+  BaseButton,
+  ConfirmationDialog
 };
 
 // Export types

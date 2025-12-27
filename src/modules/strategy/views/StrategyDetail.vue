@@ -187,13 +187,27 @@
         </div>
       </div>
     </div>
+    
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmationDialog
+      v-model="showDeleteConfirm"
+      title="Delete Strategy"
+      message="Are you sure you want to delete this strategy? This action cannot be undone."
+      confirm-text="Delete"
+      confirm-color="error"
+      icon="mdi-delete-alert"
+      icon-color="error"
+      :loading="isDeleting"
+      @confirm="confirmDeleteStrategy"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useStore } from 'vuex';
+import { ConfirmationDialog } from '@/core/components';
 
 const router = useRouter();
 const route = useRoute();
@@ -245,16 +259,25 @@ const formatDate = (dateString: string) => {
 };
 
 
-const deleteStrategy = async () => {
+const showDeleteConfirm = ref(false);
+const isDeleting = ref(false);
+
+const deleteStrategy = () => {
+  if (!strategy.value) return;
+  showDeleteConfirm.value = true;
+};
+
+const confirmDeleteStrategy = async () => {
   if (!strategy.value) return;
   
-  if (confirm('Are you sure you want to delete this strategy?')) {
-    try {
-      await store.dispatch('strategy/deleteStrategy', strategy.value.documentId);
-      router.push({ name: 'StrategiesList' });
-    } catch (error) {
-      console.error('Error deleting strategy:', error);
-    }
+  isDeleting.value = true;
+  try {
+    await store.dispatch('strategy/deleteStrategy', strategy.value.documentId);
+    showDeleteConfirm.value = false;
+    router.push({ name: 'StrategiesList' });
+  } catch (error) {
+    console.error('Error deleting strategy:', error);
+    isDeleting.value = false;
   }
 };
 
