@@ -61,6 +61,7 @@
 import { defineComponent, ref, computed, PropType } from 'vue';
 import { CalendarEvent } from '../composables/useCalendarEvents';
 import { ConfirmationDialog } from '@/core/components';
+import { formatDateTime } from '@/core/helpers/dateFormat';
 
 export default defineComponent({
   name: 'PostDetailsDialog',
@@ -94,19 +95,7 @@ export default defineComponent({
     const formattedTime = computed(() => {
       const timestamp = props.event?.start;
       if (!timestamp) return 'Not set';
-      
-      const date = new Date(timestamp);
-      
-      if (isNaN(date.getTime())) return 'Invalid Date';
-      
-      return date.toLocaleString(undefined, {
-        weekday: 'short',
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
+      return formatDateTime(timestamp);
     });
     
     // Get status color

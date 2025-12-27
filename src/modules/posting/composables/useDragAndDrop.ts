@@ -2,6 +2,7 @@ import { ref, computed, Ref, onUnmounted } from 'vue';
 import { TelegramChannel } from '../api/posting.service';
 import { scheduleService } from '../api/schedule.service';
 import { CalendarEvent } from './useCalendarEvents';
+import { formatDateTimeWithWeekday } from '@/core/helpers/dateFormat';
 
 export interface TimeSlot {
   year: number;
@@ -78,13 +79,7 @@ export function useDragAndDrop({
     if (!lastTimeSlot.value) return null;
     const { year, month, day, hour, minute } = lastTimeSlot.value;
     const d = new Date(year, month - 1, day, hour, minute);
-    return d.toLocaleString(undefined, {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return formatDateTimeWithWeekday(d);
   });
 
   /**

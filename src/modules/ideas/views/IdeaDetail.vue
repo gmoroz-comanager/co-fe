@@ -301,6 +301,7 @@ import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { ideasService } from '../api/ideas.service';
 import { postingService } from '../../posting/api/posting.service';
+import { formatDateTime } from '@/core/helpers/dateFormat';
 
 export default {
   name: 'IdeaDetail',
@@ -445,14 +446,7 @@ export default {
     };
     
     const formatDate = (dateString) => {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
+      return formatDateTime(dateString);
     };
     
     const getStatusColor = (status) => {

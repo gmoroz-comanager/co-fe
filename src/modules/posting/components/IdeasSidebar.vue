@@ -49,6 +49,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, PropType } from 'vue';
+import { formatDate } from '@/core/helpers/dateFormat';
 
 interface Idea {
   documentId: string;
@@ -91,8 +92,6 @@ export default defineComponent({
       const q = props.search.toLowerCase();
       return props.ideas.filter((i: Idea) => i.title.toLowerCase().includes(q));
     });
-    
-    const formatDate = (date: string) => new Date(date).toLocaleDateString();
     
     return {
       filteredIdeas,

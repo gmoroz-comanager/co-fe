@@ -148,6 +148,7 @@
 <script lang="ts">
 import { defineComponent, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
+import { formatDate } from '@/core/helpers/dateFormat';
 
 export default defineComponent({
   name: 'Home',
@@ -161,15 +162,7 @@ export default defineComponent({
     const newIdeas = computed(() => store.getters['ideas/newIdeas']);
     const recentIdeas = computed(() => store.getters['ideas/recentIdeas']);
     
-    // Methods
-    const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }).format(date);
-    };
+    // Methods - formatDate is imported from @/core/helpers/dateFormat
     
     const getStatusColor = (status: string | undefined) => {
       switch (status) {

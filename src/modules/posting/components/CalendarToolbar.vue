@@ -33,6 +33,7 @@
 
 <script lang="ts">
 import { defineComponent, computed, PropType } from 'vue';
+import { formatCalendarPeriod } from '@/core/helpers/dateFormat';
 
 export default defineComponent({
   name: 'CalendarToolbar',
@@ -54,16 +55,7 @@ export default defineComponent({
     // Computed period label based on view mode
     const periodLabel = computed(() => {
       if (!props.focus) return '';
-      const d = new Date(props.focus);
-      if (isNaN(d.getTime())) return '';
-      
-      if (props.viewMode === 'month') {
-        return d.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
-      }
-      if (props.viewMode === 'day') {
-        return d.toLocaleDateString(undefined, { dateStyle: 'full' });
-      }
-      return `Week of ${d.toLocaleDateString()}`;
+      return formatCalendarPeriod(props.focus, props.viewMode);
     });
     
     // Navigate to prev/next/today

@@ -259,6 +259,7 @@ import { defineComponent, ref, computed, onMounted, watch } from 'vue';
 import { useStore } from 'vuex';
 import { IdeaFilters } from '../api/ideas.service';
 import { debounce } from 'lodash';
+import { formatDate } from '@/core/helpers/dateFormat';
 
 export default defineComponent({
   name: 'IdeasList',
@@ -372,14 +373,7 @@ export default defineComponent({
       });
     };
     
-    const formatDate = (dateString: string) => {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }).format(date);
-    };
+    // formatDate is imported from @/core/helpers/dateFormat
     
     const formatDateYMD = (dateString: string) => {
       const date = new Date(dateString);
