@@ -130,26 +130,17 @@
           :events="displayEvents"
           :type="viewMode"
           :weekdays="[1, 2, 3, 4, 5, 6, 0]"
+          :first-day-of-week="1"
           color="primary"
+          event-color="color"
           style="min-height: 100%;"
           @click:event="onEventClick"
-          @click:date="changeView('day')"
+          @click:date="onDateClick"
           @mousedown:time="onCalendarMouseDown"
           @mousemove:time="onCalendarMouseMove"
           @mouseup:time="onCalendarMouseUp"
           @mouseleave.native="onCalendarMouseLeave"
-        >
-          <template v-slot:event="{ event }">
-            <div 
-              class="v-event-content pl-2 py-1 fill-height d-flex flex-column justify-center" 
-              :class="[getEventColorClass(event), { 'shadow-event': event.isShadow }]"
-              :style="event.isShadow ? 'opacity: 0.6; border: 2px dashed currentColor;' : ''"
-            >
-              <div class="text-caption font-weight-bold text-truncate lh-1">{{ event.title }}</div>
-              <div class="text-caption lh-1 opacity-80" style="font-size: 0.7rem;">{{ formatTime(event.start) }}</div>
-            </div>
-          </template>
-        </v-calendar>
+        ></v-calendar>
       </div>
     </div>
 
@@ -186,18 +177,18 @@
             <v-card-text>
                 <div class="mb-4">
                     <div class="text-caption text-medium-emphasis">Idea</div>
-                    <div class="text-body-1">{{ selectedEvent?.title }}</div>
+                    <div class="text-body-1">{{ selectedEvent?.title || selectedEvent?.name || 'Scheduled Post' }}</div>
                 </div>
                 <div class="mb-4">
                     <div class="text-caption text-medium-emphasis">Time</div>
                     <div class="text-body-1">
-                        {{ selectedEvent ? new Date(selectedEvent.start).toLocaleString() : '' }}
+                        {{ formatEventTime(selectedEvent?.start) }}
                     </div>
                 </div>
                 <div class="mb-4">
                     <div class="text-caption text-medium-emphasis">Status</div>
-                    <v-chip size="small" :color="selectedEvent?.color" label class="text-uppercase">
-                        {{ selectedEvent?.extendedProps?.status || 'Scheduled' }}
+                    <v-chip size="small" :color="selectedEvent?.color || 'primary'" label class="text-uppercase">
+                        {{ selectedEvent?.extendedProps?.status || 'scheduled' }}
                     </v-chip>
                 </div>
             </v-card-text>
@@ -297,9 +288,36 @@ export default defineComponent({
 
     // Formatting
     const formatDate = (date: string) => new Date(date).toLocaleDateString();
-    const formatTime = (date: any) => {
-        const d = new Date(date);
+    const formatTime = (timestamp: any) => {
+        // Handle both timestamps (numbers) and Date objects
+        const d = typeof timestamp === 'number' ? new Date(timestamp) : new Date(timestamp);
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+    
+    const formatEventTime = (timestamp: any): string => {
+        if (!timestamp) return 'Not set';
+        
+        let date: Date;
+        if (typeof timestamp === 'number') {
+            date = new Date(timestamp);
+        } else if (timestamp instanceof Date) {
+            date = timestamp;
+        } else if (typeof timestamp === 'string') {
+            date = new Date(timestamp);
+        } else {
+            return 'Invalid time';
+        }
+        
+        if (isNaN(date.getTime())) return 'Invalid Date';
+        
+        return date.toLocaleString(undefined, {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     const getEventColorClass = (event: any) => {
@@ -411,17 +429,22 @@ export default defineComponent({
                 !p.channel || p.channel.documentId === selectedChannelId.value
             );
 
-            events.value = posts.map((post: any) => ({
-                id: post.documentId,
-                title: post.idea?.title || 'Scheduled Post',
-                start: new Date(post.scheduledAt),
-                end: new Date(new Date(post.scheduledAt).getTime() + 30 * 60000),
-                color: post.status === 'published' ? 'success' : 'primary',
-                allDay: false,
-                extendedProps: {
-                    status: post.status
-                }
-            }));
+            events.value = posts.map((post: any) => {
+                const startTime = new Date(post.scheduledAt).getTime();
+                const endTime = startTime + 30 * 60 * 1000; // 30 min duration
+                return {
+                    id: post.documentId,
+                    name: post.idea?.title || 'Scheduled Post',  // VCalendar uses 'name' not 'title'
+                    title: post.idea?.title || 'Scheduled Post', // Keep for our template
+                    start: startTime,
+                    end: endTime,
+                    color: post.status === 'published' ? 'success' : 'primary',
+                    timed: true,
+                    extendedProps: {
+                        status: post.status
+                    }
+                };
+            });
         } catch (e) {
             console.error('Failed to fetch events', e);
         }
@@ -446,6 +469,7 @@ export default defineComponent({
     // ========== External Drag (from Sidebar) ==========
     
     // Calculate time from mouse position over calendar
+    // Uses element inspection to find which day column cursor is over
     const calculateTimeFromPosition = (e: MouseEvent): Date | null => {
         if (!calendarContainer.value || viewMode.value === 'month') return null;
         
@@ -458,65 +482,111 @@ export default defineComponent({
             return null;
         }
         
-        // Find the time grid element - try multiple selectors for VCalendar
-        const timeGrid = container.querySelector('.v-calendar-day__body') || 
-                         container.querySelector('.v-calendar-weekly__day-content') ||
-                         container.querySelector('.v-calendar__container') ||
-                         container.querySelector('[class*="v-calendar"]');
+      
         
-        if (!timeGrid) {
-            console.warn('Could not find calendar time grid element');
-            return null;
-        }
-        
-        const gridRect = timeGrid.getBoundingClientRect();
-        
-        // Calculate time from Y position relative to the visible grid
-        const relativeY = e.clientY - gridRect.top + container.scrollTop;
-        
-        // VCalendar typically renders 24 hours, estimate grid height
-        // Use scrollHeight if available, otherwise use a reasonable default (48px per hour = 1152px)
-        const estimatedGridHeight = container.scrollHeight > 500 ? container.scrollHeight : 1152;
-        
-        // 24 hours = estimatedGridHeight pixels
-        const hoursExact = Math.max(0, Math.min(23.99, (relativeY / estimatedGridHeight) * 24));
-        const hours = Math.floor(hoursExact);
-        const minutes = Math.floor((hoursExact - hours) * 60);
-        
-        // Calculate day from X position
+        // Get all day header elements to find which day we're over
+        const dayHeaders = container.querySelectorAll('.v-calendar-weekly__head-weekday');
         let targetDate = new Date(focus.value);
+        let foundDay = false;
         
-        if (viewMode.value === 'week') {
-            // For week view, calculate which day column we're over
-            // Assume time column on the left takes ~60px, rest is divided by 7 days
-            const timeColumnWidth = 60;
-            const daysAreaLeft = containerRect.left + timeColumnWidth;
-            const daysAreaWidth = containerRect.width - timeColumnWidth;
-            
-            if (e.clientX > daysAreaLeft) {
-                const relativeX = e.clientX - daysAreaLeft;
-                const colWidth = daysAreaWidth / 7;
-                const colIndex = Math.max(0, Math.min(6, Math.floor(relativeX / colWidth)));
+        if (viewMode.value === 'week' && dayHeaders.length > 0) {
+            // Each header has the day number, find which column cursor is in
+            for (let i = 0; i < dayHeaders.length; i++) {
+                const header = dayHeaders[i] as HTMLElement;
+                const rect = header.getBoundingClientRect();
                 
-                // Calculate start of week (Monday)
-                const current = new Date(focus.value);
-                const day = current.getDay();
-                const diff = current.getDate() - day + (day === 0 ? -6 : 1);
-                const startOfWeek = new Date(current);
-                startOfWeek.setDate(diff);
-                startOfWeek.setHours(0, 0, 0, 0);
-                
-                targetDate = new Date(startOfWeek);
-                targetDate.setDate(targetDate.getDate() + colIndex);
+                if (e.clientX >= rect.left && e.clientX < rect.right) {
+                    // Found the column! Get the date from the header
+                    // Header contains day number, we need to calculate full date
+                    const dayNum = parseInt(header.textContent?.trim() || '0');
+                    
+                    if (dayNum > 0) {
+                        // Calculate which month this day belongs to
+                        const current = new Date(focus.value);
+                        const year = current.getFullYear();
+                        const month = current.getMonth();
+                        
+                        // Try current month first
+                        targetDate = new Date(year, month, dayNum);
+                        
+                        // If the date is too far from focus, adjust month
+                        const diffDays = Math.abs((targetDate.getTime() - current.getTime()) / (1000 * 60 * 60 * 24));
+                        if (diffDays > 15) {
+                            // Wrong month, try adjacent
+                            if (dayNum > 15) {
+                                targetDate = new Date(year, month - 1, dayNum);
+                            } else {
+                                targetDate = new Date(year, month + 1, dayNum);
+                            }
+                        }
+                        foundDay = true;
+                    }
+                    break;
+                }
             }
         }
-        // For day view, targetDate stays as focus.value
         
-        // Set hours and round to 15-minute intervals
+        // Fallback for day view or if headers not found
+        if (!foundDay && viewMode.value === 'day') {
+            targetDate = new Date(focus.value);
+            foundDay = true;
+        }
+        
+        if (!foundDay) {
+            // Last resort fallback using column position
+            const dayColumns = container.querySelectorAll('.v-calendar-daily__day');
+            if (dayColumns.length > 0) {
+                const firstCol = dayColumns[0] as HTMLElement;
+                const firstColRect = firstCol.getBoundingClientRect();
+                const colWidth = firstCol.offsetWidth;
+                const relativeX = e.clientX - firstColRect.left;
+                const colIndex = Math.max(0, Math.min(dayColumns.length - 1, Math.floor(relativeX / colWidth)));
+                
+                // Calculate date: focus is somewhere in the week, find Monday
+                const current = new Date(focus.value);
+                const dayOfWeek = current.getDay(); // 0=Sun
+                const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+                const monday = new Date(current);
+                monday.setDate(current.getDate() + mondayOffset);
+                
+                targetDate = new Date(monday);
+                targetDate.setDate(monday.getDate() + colIndex);
+            }
+        }
+        
+        // === CALCULATE TIME (VERTICAL) ===
+        const intervals = container.querySelectorAll('.v-calendar-daily__interval');
+        let hours = 12; // default noon
+        let minutes = 0;
+        
+        if (intervals.length > 0) {
+            const firstInterval = intervals[0] as HTMLElement;
+            const intervalHeight = firstInterval.offsetHeight;
+            
+            // Get the position of the first interval relative to container
+            const firstIntervalRect = firstInterval.getBoundingClientRect();
+            
+            // Mouse position relative to container top, plus scroll
+            const scrollTop = container.scrollTop;
+            const containerTop = containerRect.top;
+            
+            // The first interval's top in scroll coordinates
+            const firstIntervalScrollTop = (firstIntervalRect.top - containerTop) + scrollTop;
+            
+            // Mouse Y in scroll coordinates
+            const mouseScrollY = (e.clientY - containerTop) + scrollTop;
+            
+            // Position within the time grid
+            const relativeY = mouseScrollY - firstIntervalScrollTop;
+            
+            // Each interval = 1 hour, calculate exact time
+            const hoursExact = Math.max(0, Math.min(23.99, relativeY / intervalHeight));
+            hours = Math.floor(hoursExact);
+            minutes = Math.floor((hoursExact - hours) * 60);
+        }
+        
         targetDate.setHours(hours, minutes, 0, 0);
-        const roundedTime = roundTime(targetDate.getTime());
-        
-        return new Date(roundedTime);
+        return new Date(roundTime(targetDate.getTime()));
     };
     
     const onIdeaMouseDown = (e: MouseEvent, idea: any) => {
@@ -564,17 +634,18 @@ export default defineComponent({
                 minute: targetTime.getMinutes()
             };
             
-            // Update shadow event - match format of regular events
-            const start = new Date(targetTime);
-            const end = new Date(targetTime.getTime() + 30 * 60 * 1000);
+            // Update shadow event - match format of regular events (timestamps for timed events)
+            const startTime = targetTime.getTime();
+            const endTime = startTime + 30 * 60 * 1000; // 30 min duration
             
             shadowEvent.value = {
                 id: 'shadow-event',
+                name: `📍 ${draggedIdea.value.title}`,
                 title: `📍 ${draggedIdea.value.title}`,
-                start: start,
-                end: end,
-                color: 'primary',
-                allDay: false,
+                start: startTime,
+                end: endTime,
+                color: 'indigo-lighten-3',  // More visible color
+                timed: true,
                 isShadow: true,
                 extendedProps: {
                     status: 'preview'
@@ -661,13 +732,44 @@ export default defineComponent({
             lastTimeSlot.value = null;
         }
     };
+    
+    const onDateClick = (day: any) => {
+        // When clicking on a date, switch to day view
+        if (day.date) {
+            focus.value = new Date(day.date);
+        }
+        viewMode.value = 'day';
+    };
 
-    const onEventClick = (event: any) => {
-        // Don't open dialog for shadow events
-        const clickedEvent = event.event || event;
-        if (clickedEvent.isShadow) return;
+    const onEventClick = (nativeEvent: Event, eventInfo: any) => {
+        // VCalendar click:event passes two arguments:
+        // 1. Event (native browser event)
+        // 2. Object with { event, eventParsed, day, start, end, timed, ... }
         
-        selectedEvent.value = clickedEvent;
+        const eventData = eventInfo?.event;
+        if (!eventData) return;
+        
+        // Skip shadow events
+        if (eventData.isShadow) return;
+        
+        // Find the original event from our events array by id
+        const originalEvent = events.value.find(e => e.id === eventData.id);
+        
+        if (originalEvent) {
+            selectedEvent.value = originalEvent;
+        } else {
+            // Fallback: construct from eventData
+            selectedEvent.value = {
+                id: eventData.id || 'unknown',
+                title: eventData.name || eventData.title || 'Scheduled Post',
+                name: eventData.name || eventData.title || 'Scheduled Post',
+                start: eventData.start,
+                end: eventData.end,
+                color: eventData.color || 'primary',
+                extendedProps: eventData.extendedProps || { status: 'scheduled' }
+            };
+        }
+        
         detailsDialogOpen.value = true;
     };
     
@@ -702,6 +804,7 @@ export default defineComponent({
         dropTargetTime,
         formatDate,
         formatTime,
+        formatEventTime,
         getEventColorClass,
         changeView,
         deletePost,
@@ -710,6 +813,7 @@ export default defineComponent({
         onCalendarMouseMove,
         onCalendarMouseUp,
         onCalendarMouseLeave,
+        onDateClick,
         onEventClick
     };
   }
