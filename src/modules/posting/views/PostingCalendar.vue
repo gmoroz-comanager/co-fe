@@ -189,14 +189,21 @@
                     <div class="text-body-1">{{ selectedEvent?.title || selectedEvent?.name || 'Scheduled Post' }}</div>
                 </div>
                 <div class="mb-4">
-                    <div class="text-caption text-medium-emphasis">Time</div>
+                    <div class="text-caption text-medium-emphasis">Channel</div>
+                    <div class="text-body-1 d-flex align-center">
+                        <v-icon size="small" class="mr-2" color="primary">mdi-telegram</v-icon>
+                        {{ selectedEvent?.extendedProps?.channel?.title || 'Unknown Channel' }}
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <div class="text-caption text-medium-emphasis">Scheduled Time</div>
                     <div class="text-body-1">
                         {{ formatEventTime(selectedEvent?.start) }}
                     </div>
                 </div>
                 <div class="mb-4">
                     <div class="text-caption text-medium-emphasis">Status</div>
-                    <v-chip size="small" :color="selectedEvent?.color || 'primary'" label class="text-uppercase">
+                    <v-chip size="small" :color="getStatusColor(selectedEvent?.extendedProps?.status)" label class="text-uppercase">
                         {{ selectedEvent?.extendedProps?.status || 'scheduled' }}
                     </v-chip>
                 </div>
@@ -337,6 +344,15 @@ export default defineComponent({
         // Return class based on status if needed
         return '';
     };
+    
+    const getStatusColor = (status: string | undefined): string => {
+        switch (status) {
+            case 'published': return 'success';
+            case 'failed': return 'error';
+            case 'scheduled': return 'primary';
+            default: return 'grey';
+        }
+    };
 
     // Actions
     const changeView = (action: 'prev' | 'next' | 'today' | 'day') => {
@@ -474,7 +490,12 @@ export default defineComponent({
                     color: post.status === 'published' ? 'success' : 'primary',
                     timed: true,
                     extendedProps: {
-                        status: post.status
+                        status: post.status,
+                        channel: post.channel ? {
+                            id: post.channel.id,
+                            documentId: post.channel.documentId,
+                            title: post.channel.title
+                        } : null
                     }
                 };
             });
@@ -845,6 +866,7 @@ export default defineComponent({
         formatTime,
         formatEventTime,
         getEventColorClass,
+        getStatusColor,
         changeView,
         deletePost,
         onIdeaMouseDown,
