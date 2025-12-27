@@ -177,7 +177,7 @@
             <span>{{ formatDate(idea.createdAt) }}</span>
             <v-spacer></v-spacer>
             <v-chip
-              v-if="idea.polishedBody"
+              v-if="idea.work_status === 'readyToPublish'"
               size="x-small"
               color="purple"
               variant="outlined"

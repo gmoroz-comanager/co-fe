@@ -218,7 +218,12 @@ export default defineComponent({
     let timeUpdateInterval: any = null;
     
     // Store getters
-    const ideas = computed(() => store.getters['ideas/allIdeas'].filter((i: any) => i.polishedBody));
+    // Filter ideas to show only readyToPublish and planned (with polishedBody)
+    const ideas = computed(() => 
+      store.getters['ideas/allIdeas'].filter((i: any) => 
+        i.polishedBody && (i.work_status === 'readyToPublish' || i.work_status === 'planned')
+      )
+    );
     const loadingIdeas = computed(() => store.getters['ideas/isLoading']);
     const channels = computed(() => store.getters['posting/channels'] as TelegramChannel[]);
     const loadingChannels = computed(() => store.getters['posting/isLoading']);
@@ -244,6 +249,11 @@ export default defineComponent({
       channels,
       getChannelColor,
     });
+    
+    // Callback after post created - refresh ideas to update statuses
+    const refreshIdeas = async () => {
+      await store.dispatch('ideas/fetchIdeas');
+    };
     
     const {
       draggedIdea,
@@ -271,6 +281,7 @@ export default defineComponent({
       removeLoadingEvent,
       fetchEvents,
       showErrorToast,
+      onPostCreated: refreshIdeas,
     });
     
     // Current time indicator functions
@@ -348,7 +359,11 @@ export default defineComponent({
       try {
         await scheduleService.deleteScheduledPost(postId);
         detailsDialogOpen.value = false;
-        await fetchEvents();
+        // Refresh events and ideas (idea status may change back to readyToPublish)
+        await Promise.all([
+          fetchEvents(),
+          store.dispatch('ideas/fetchIdeas'),
+        ]);
       } catch (e) {
         console.error('Failed to delete post:', e);
         showErrorToast('Failed to delete post');

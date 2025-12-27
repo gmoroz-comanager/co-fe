@@ -9,7 +9,7 @@ export interface Idea {
   body?: any;
   polishedBody?: any;
   tags?: string;
-  work_status?: 'new' | 'readyToPublish' | 'published';
+  work_status?: 'new' | 'readyToPublish' | 'planned' | 'published';
   createdAt: string;
   updatedAt: string;
   

@@ -30,6 +30,7 @@ interface UseDragAndDropOptions {
   removeLoadingEvent: (loadingEventId: string) => void;
   fetchEvents: () => Promise<void>;
   showErrorToast: (message: string) => void;
+  onPostCreated?: () => Promise<void>; // Callback after successful post creation (e.g., to refresh ideas)
 }
 
 /**
@@ -63,6 +64,7 @@ export function useDragAndDrop({
   removeLoadingEvent,
   fetchEvents,
   showErrorToast,
+  onPostCreated,
 }: UseDragAndDropOptions) {
   // Drag state
   const draggedIdea = ref<any>(null);
@@ -366,8 +368,13 @@ export function useDragAndDrop({
         status: 'scheduled',
       });
 
-      // Success - fetch real events (replaces loading placeholder)
+      // Success - fetch real events (replaces loading placeholder) and refresh ideas
       await fetchEvents();
+      
+      // Callback to refresh ideas (status changes from readyToPublish to planned)
+      if (onPostCreated) {
+        await onPostCreated();
+      }
     } catch (err) {
       console.error('Failed to create scheduled post:', err);
 
