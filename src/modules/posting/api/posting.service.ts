@@ -5,6 +5,7 @@ export interface TelegramBot {
   documentId: string;
   username: string;
   first_name: string;
+  channels?: TelegramChannel[];
 }
 
 export interface TelegramChannel {
@@ -22,7 +23,7 @@ class PostingService {
   }
 
   async getBots(): Promise<{ data: TelegramBot[] }> {
-    const response = await httpService.get<{ data: TelegramBot[] }>('/telegram-bots');
+    const response = await httpService.get<{ data: TelegramBot[] }>('/telegram-bots?populate=channels');
     return response.data;
   }
 
