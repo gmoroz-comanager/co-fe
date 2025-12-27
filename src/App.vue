@@ -69,6 +69,10 @@ export default {
 </script>
 
 <style>
+:root {
+  --app-bar-height: 64px;
+}
+
 html, body {
   font-family: 'Roboto', sans-serif;
   -webkit-font-smoothing: antialiased;
