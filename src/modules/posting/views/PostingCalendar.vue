@@ -140,7 +140,16 @@
           @mousemove:time="onCalendarMouseMove"
           @mouseup:time="onCalendarMouseUp"
           @mouseleave.native="onCalendarMouseLeave"
-        ></v-calendar>
+        >
+          <!-- Current time indicator -->
+          <template v-slot:day-body="{ date, week }">
+            <div
+              class="v-current-time"
+              :class="{ first: date === week[0].date }"
+              :style="{ top: nowY }"
+            ></div>
+          </template>
+        </v-calendar>
       </div>
     </div>
 
@@ -241,6 +250,10 @@ export default defineComponent({
     const lastTimeSlot = ref<any>(null);
     const isDragging = ref(false);
     const dragGhostStyle = ref({ left: '0px', top: '0px' });
+    
+    // Current time indicator
+    const nowY = ref('-10px');
+    let timeUpdateInterval: any = null;
     
     // Computed: formatted drop target time for display
     const dropTargetTime = computed(() => {
@@ -366,6 +379,26 @@ export default defineComponent({
         }
     };
 
+    // Current time indicator functions
+    const updateNowY = () => {
+        if (calendar.value?.timeToY && calendar.value?.times?.now) {
+            nowY.value = calendar.value.timeToY(calendar.value.times.now) + 'px';
+        }
+    };
+    
+    const getCurrentTime = () => {
+        if (calendar.value?.times?.now) {
+            return calendar.value.times.now.hour * 60 + calendar.value.times.now.minute;
+        }
+        return new Date().getHours() * 60 + new Date().getMinutes();
+    };
+    
+    const scrollToCurrentTime = () => {
+        const time = getCurrentTime();
+        const first = Math.max(0, time - (time % 30) - 30);
+        calendar.value?.scrollToTime?.(first);
+    };
+
     // Initialization
     onMounted(async () => {
         await Promise.all([
@@ -377,7 +410,17 @@ export default defineComponent({
             selectedChannelId.value = channels.value[0].documentId;
         }
 
-        scrollToWorkHours();
+        // Setup current time indicator
+        nextTick(() => {
+            updateNowY();
+            scrollToCurrentTime();
+        });
+        
+        // Update time indicator every minute
+        timeUpdateInterval = setInterval(() => {
+            calendar.value?.updateTimes?.();
+            updateNowY();
+        }, 60000);
     });
 
     watch(selectedChannelId, async (newId) => {
@@ -390,22 +433,12 @@ export default defineComponent({
     });
 
     watch(viewMode, () => {
-        scrollToWorkHours();
-    });
-
-    const scrollToWorkHours = () => {
+        // When switching views, scroll to current time
         nextTick(() => {
-            if (calendarContainer.value) {
-                // Approximate 8 AM scroll position
-                const scrollHeight = calendarContainer.value.scrollHeight;
-                if (scrollHeight > 0 && viewMode.value !== 'month') {
-                     // Assuming ~1000px height for 24h usually, but varying.
-                     // Safe bet: scroll 30% down
-                     calendarContainer.value.scrollTop = scrollHeight * 0.3;
-                }
-            }
+            updateNowY();
+            scrollToCurrentTime();
         });
-    };
+    });
 
     const fetchEvents = async () => {
         if (!selectedChannelId.value) return;
@@ -779,6 +812,11 @@ export default defineComponent({
         document.removeEventListener('mouseup', onGlobalMouseUp);
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
+        
+        // Clear time update interval
+        if (timeUpdateInterval) {
+            clearInterval(timeUpdateInterval);
+        }
     });
 
     return {
@@ -802,6 +840,7 @@ export default defineComponent({
         draggedIdea,
         dragGhostStyle,
         dropTargetTime,
+        nowY,
         formatDate,
         formatTime,
         formatEventTime,
@@ -872,5 +911,26 @@ export default defineComponent({
     opacity: 0.95;
     transform: rotate(2deg);
     transition: none;
+}
+
+/* Current time indicator */
+.v-current-time {
+    height: 2px;
+    background-color: #ea4335;
+    position: absolute;
+    left: -1px;
+    right: 0;
+    pointer-events: none;
+    z-index: 1;
+}
+.v-current-time.first::before {
+    content: '';
+    position: absolute;
+    background-color: #ea4335;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-top: -5px;
+    margin-left: -6.5px;
 }
 </style>
