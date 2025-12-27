@@ -26,14 +26,6 @@ class PostingService {
     return response.data;
   }
 
-  async verifyChannel(botDocumentId: string, channelIdentifier: string): Promise<{ data: TelegramChannel }> {
-    const response = await httpService.post<{ data: TelegramChannel }>('/telegram-channel/verify', { 
-      botDocumentId, 
-      channelIdentifier 
-    });
-    return response.data;
-  }
-
   async startVerification(botDocumentId: string): Promise<{ code: string; expiresAt: number }> {
     const response = await httpService.post<{ code: string; expiresAt: number }>('/telegram-channel/verify-start', { 
       botDocumentId 

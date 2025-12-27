@@ -70,20 +70,7 @@ const postingModule: Module<PostingState, any> = {
         commit('SET_LOADING', false);
       }
     },
-    async verifyChannel({ commit }, { botDocumentId, channelIdentifier }) {
-        commit('SET_LOADING', true);
-        commit('SET_ERROR', null);
-        try {
-          const response = await postingService.verifyChannel(botDocumentId, channelIdentifier);
-          commit('ADD_CHANNEL', response.data);
-          return response.data;
-        } catch (error: any) {
-          commit('SET_ERROR', error.response?.data?.error?.message || error.message);
-          throw error;
-        } finally {
-          commit('SET_LOADING', false);
-        }
-    },
+   
     async startVerification({ commit }, botDocumentId: string) {
         try {
             return await postingService.startVerification(botDocumentId);
