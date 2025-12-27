@@ -233,8 +233,17 @@
               class="calendar-event-content d-flex align-center px-1"
               :style="{ backgroundColor: event.color, borderRadius: '4px' }"
             >
-              <!-- Status dot -->
+              <!-- Loading spinner or status dot -->
+              <v-progress-circular
+                v-if="event.isLoading"
+                indeterminate
+                size="10"
+                width="2"
+                color="white"
+                class="mr-1"
+              ></v-progress-circular>
               <span 
+                v-else
                 class="status-dot mr-1"
                 :style="{ backgroundColor: getStatusDotColor(event.extendedProps?.status) }"
               ></span>
@@ -361,6 +370,21 @@
             </v-card-actions>
         </v-card>
     </v-dialog>
+    
+    <!-- Toast/Snackbar for notifications -->
+    <v-snackbar
+      v-model="toastVisible"
+      :color="toastColor"
+      :timeout="4000"
+      location="bottom right"
+    >
+      {{ toastMessage }}
+      <template v-slot:actions>
+        <v-btn variant="text" @click="toastVisible = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </div>
 </template>
 
@@ -617,19 +641,54 @@ export default defineComponent({
     const confirmChannelSelection = async (channelId: string) => {
         if (!pendingDropData.value) return;
         
+        const { idea, time } = pendingDropData.value;
+        const loadingEventId = `loading-${Date.now()}`;
+        const channel = channels.value.find(c => c.documentId === channelId);
+        const channelColor = channel ? getChannelColor(channel) : '#1976D2';
+        
+        // Create loading placeholder event immediately
+        const loadingEvent = {
+            id: loadingEventId,
+            name: idea.title,
+            title: idea.title,
+            start: time.getTime(),
+            end: time.getTime() + 30 * 60 * 1000,
+            color: channelColor,
+            timed: true,
+            isLoading: true,
+            extendedProps: {
+                status: 'loading',
+                channel: channel ? {
+                    id: channel.id,
+                    documentId: channel.documentId,
+                    title: channel.title
+                } : null
+            }
+        };
+        
+        // Close dialog and add loading event immediately
+        channelPickerDialogOpen.value = false;
+        events.value = [...events.value, loadingEvent];
+        pendingDropData.value = null;
+        
         try {
             await scheduleService.createScheduledPost({
-                idea: pendingDropData.value.idea.documentId,
-                scheduledAt: pendingDropData.value.time.toISOString(),
+                idea: idea.documentId,
+                scheduledAt: time.toISOString(),
                 channel: channelId,
                 status: 'scheduled'
             });
             
-            channelPickerDialogOpen.value = false;
-            pendingDropData.value = null;
+            // Success - fetch real events (replaces loading placeholder)
             await fetchEvents();
         } catch (err) {
             console.error('Failed to create scheduled post:', err);
+            
+            // Remove loading placeholder
+            events.value = events.value.filter(e => e.id !== loadingEventId);
+            
+            // Show error toast
+            showErrorToast('Failed to schedule post. Please try again.');
         }
     };
 
@@ -1029,6 +1088,7 @@ export default defineComponent({
         if (draggedIdea.value && lastTimeSlot.value && selectedChannelId.value) {
             const time = roundTime(toTime(lastTimeSlot.value));
             const targetDate = new Date(time);
+            const currentIdea = draggedIdea.value;
             
             // Determine target channel
             let targetChannelId: string | null = null;
@@ -1058,20 +1118,61 @@ export default defineComponent({
                 targetChannelId = selectedChannelId.value;
             }
             
-            // Create post immediately
+            // Create post with loading placeholder
             if (targetChannelId) {
+                const loadingEventId = `loading-${Date.now()}`;
+                const channel = channels.value.find(c => c.documentId === targetChannelId);
+                const channelColor = channel ? getChannelColor(channel) : '#1976D2';
+                
+                // Create loading placeholder event immediately
+                const loadingEvent = {
+                    id: loadingEventId,
+                    name: currentIdea.title,
+                    title: currentIdea.title,
+                    start: targetDate.getTime(),
+                    end: targetDate.getTime() + 30 * 60 * 1000,
+                    color: channelColor,
+                    timed: true,
+                    isLoading: true,
+                    extendedProps: {
+                        status: 'loading',
+                        channel: channel ? {
+                            id: channel.id,
+                            documentId: channel.documentId,
+                            title: channel.title
+                        } : null
+                    }
+                };
+                
+                // Add loading event to display
+                events.value = [...events.value, loadingEvent];
+                
+                // Reset drag state immediately (better UX)
+                isDragging.value = false;
+                draggedIdea.value = null;
+                shadowEvent.value = null;
+                lastTimeSlot.value = null;
+                
                 try {
                     await scheduleService.createScheduledPost({
-                        idea: draggedIdea.value.documentId,
+                        idea: currentIdea.documentId,
                         scheduledAt: targetDate.toISOString(),
                         channel: targetChannelId,
                         status: 'scheduled'
                     });
                     
+                    // Success - fetch real events (replaces loading placeholder)
                     await fetchEvents();
                 } catch (err) {
                     console.error('Failed to create scheduled post:', err);
+                    
+                    // Remove loading placeholder
+                    events.value = events.value.filter(e => e.id !== loadingEventId);
+                    
+                    // Show error toast
+                    showErrorToast('Failed to schedule post. Please try again.');
                 }
+                return;
             }
         }
         
@@ -1080,6 +1181,17 @@ export default defineComponent({
         draggedIdea.value = null;
         shadowEvent.value = null;
         lastTimeSlot.value = null;
+    };
+    
+    // Toast notification state
+    const toastVisible = ref(false);
+    const toastMessage = ref('');
+    const toastColor = ref('error');
+    
+    const showErrorToast = (message: string) => {
+        toastMessage.value = message;
+        toastColor.value = 'error';
+        toastVisible.value = true;
     };
     
     // ========== VCalendar Mouse Events ==========
@@ -1205,6 +1317,10 @@ export default defineComponent({
         editingChannelColor,
         colorSwatches,
         channelPickerDialogOpen,
+        // Toast
+        toastVisible,
+        toastMessage,
+        toastColor,
         // Functions
         formatDate,
         formatTime,
