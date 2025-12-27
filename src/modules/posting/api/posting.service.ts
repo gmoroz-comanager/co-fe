@@ -34,6 +34,20 @@ class PostingService {
     return response.data;
   }
 
+  async startVerification(botDocumentId: string): Promise<{ code: string; expiresAt: number }> {
+    const response = await httpService.post<{ code: string; expiresAt: number }>('/telegram-channel/verify-start', { 
+      botDocumentId 
+    });
+    return response.data;
+  }
+
+  async checkVerificationStatus(code: string): Promise<{ status: string }> {
+    const response = await httpService.get<{ status: string }>('/telegram-channel/verify-status', { 
+      params: { code } 
+    });
+    return response.data;
+  }
+
   async getChannels(): Promise<{ data: TelegramChannel[] }> {
     const response = await httpService.get<{ data: TelegramChannel[] }>('/telegram-channels?populate=bot');
     return response.data;

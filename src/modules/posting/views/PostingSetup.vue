@@ -53,14 +53,8 @@
         <v-card :disabled="bots.length === 0">
           <v-card-title class="text-h5">2. Connect Channel</v-card-title>
           <v-card-text>
-            <p class="mb-4">Add your bot to your Telegram channel as an Administrator.</p>
-            <ol class="ml-4 mb-4">
-              <li>Go to your Channel Settings > Administrators.</li>
-              <li>Add your bot (@{{ selectedBot?.username || 'your_bot' }}) as an admin.</li>
-              <li>Ensure it has "Post Messages" permission.</li>
-              <li>Enter your Channel Username (e.g. @mychannel) or ID below.</li>
-            </ol>
-
+            <p class="mb-4">Connect your channel by verifying ownership.</p>
+            
             <v-select
               v-if="bots.length > 1"
               v-model="selectedBotId"
@@ -69,27 +63,50 @@
               item-value="documentId"
               label="Select Bot"
               variant="outlined"
-              class="mb-2"
+              class="mb-4"
             ></v-select>
 
-            <v-text-field
-              v-model="channelIdentifier"
-              label="Channel Username or ID"
-              placeholder="@my_awesome_channel"
-              variant="outlined"
-              hint="Bot will send a test message and delete it."
-              persistent-hint
-              :error-messages="channelError"
-            ></v-text-field>
+            <div v-if="!verificationCode">
+                <p class="mb-4">Click below to generate a verification code.</p>
+            </div>
+
+            <div v-else class="text-center my-6">
+                <p class="text-h6 mb-2">Verification Code:</p>
+                <div class="text-h2 font-weight-bold text-primary mb-4">{{ verificationCode }}</div>
+                
+                <v-alert type="info" variant="tonal" class="text-left mb-4">
+                    <div class="text-subtitle-1 font-weight-bold mb-2">Instructions:</div>
+                    <ol class="ml-4">
+                        <li>Go to your Telegram Channel.</li>
+                        <li>Add <strong>@{{ selectedBot?.username }}</strong> as an Administrator.</li>
+                        <li>Send the message: <code class="bg-grey-lighten-3 px-1 rounded">/verify {{ verificationCode }}</code></li>
+                    </ol>
+                </v-alert>
+
+                <div class="d-flex align-center justify-center">
+                    <v-progress-circular indeterminate color="primary" size="24" class="mr-2"></v-progress-circular>
+                    <span>Waiting for verification...</span>
+                </div>
+            </div>
+
           </v-card-text>
           <v-card-actions>
             <v-btn
+              v-if="!verificationCode"
               color="secondary"
-              :loading="verifyingChannel"
-              @click="verifyChannel"
-              :disabled="!channelIdentifier || !selectedBotId"
+              :loading="startingVerification"
+              @click="startVerification"
+              :disabled="!selectedBotId"
             >
-              Verify Channel
+              Start Verification
+            </v-btn>
+             <v-btn
+              v-else
+              variant="text"
+              color="error"
+              @click="cancelVerification"
+            >
+              Cancel
             </v-btn>
           </v-card-actions>
 
@@ -112,7 +129,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineComponent, ref, computed, onMounted, watch, onUnmounted } from 'vue';
 import { useStore } from 'vuex';
 
 export default defineComponent({
@@ -121,12 +138,13 @@ export default defineComponent({
     const store = useStore();
     
     const botToken = ref('');
-    const channelIdentifier = ref('');
     const selectedBotId = ref('');
     const registeringBot = ref(false);
-    const verifyingChannel = ref(false);
     const botError = ref('');
-    const channelError = ref('');
+
+    const verificationCode = ref('');
+    const startingVerification = ref(false);
+    let pollingInterval: any = null;
 
     const snackbar = ref(false);
     const snackbarMessage = ref('');
@@ -140,6 +158,10 @@ export default defineComponent({
     onMounted(() => {
       store.dispatch('posting/fetchBots');
       store.dispatch('posting/fetchChannels');
+    });
+
+    onUnmounted(() => {
+        if (pollingInterval) clearInterval(pollingInterval);
     });
 
     // Auto-select first bot
@@ -164,22 +186,41 @@ export default defineComponent({
       }
     };
 
-    const verifyChannel = async () => {
-      channelError.value = '';
-      verifyingChannel.value = true;
-      try {
-        await store.dispatch('posting/verifyChannel', {
-            botDocumentId: selectedBotId.value,
-            channelIdentifier: channelIdentifier.value
-        });
-        channelIdentifier.value = '';
-        showSnackbar('Channel verified successfully!', 'success');
-      } catch (e: any) {
-        channelError.value = e.message || 'Failed to verify channel';
-        showSnackbar('Failed to verify channel', 'error');
-      } finally {
-        verifyingChannel.value = false;
-      }
+    const startVerification = async () => {
+        if (!selectedBotId.value) return;
+        startingVerification.value = true;
+        try {
+            const res = await store.dispatch('posting/startVerification', selectedBotId.value);
+            verificationCode.value = res.code;
+            pollingInterval = setInterval(checkStatus, 3000);
+        } catch (e: any) {
+            showSnackbar(e.message || 'Failed to start verification', 'error');
+        } finally {
+            startingVerification.value = false;
+        }
+    };
+
+    const checkStatus = async () => {
+        if (!verificationCode.value) return;
+        try {
+            const res = await store.dispatch('posting/checkVerificationStatus', verificationCode.value);
+            if (res.status === 'verified') {
+                showSnackbar('Channel verified successfully!', 'success');
+                cancelVerification();
+                store.dispatch('posting/fetchChannels');
+            } else if (res.status === 'expired') {
+                showSnackbar('Verification code expired', 'error');
+                cancelVerification();
+            }
+        } catch (e) {
+            // ignore
+        }
+    };
+
+    const cancelVerification = () => {
+        verificationCode.value = '';
+        if (pollingInterval) clearInterval(pollingInterval);
+        pollingInterval = null;
     };
 
     const showSnackbar = (msg: string, color: string) => {
@@ -190,17 +231,17 @@ export default defineComponent({
 
     return {
       botToken,
-      channelIdentifier,
       selectedBotId,
       selectedBot,
       bots,
       channels,
       registeringBot,
-      verifyingChannel,
       botError,
-      channelError,
       registerBot,
-      verifyChannel,
+      startVerification,
+      cancelVerification,
+      verificationCode,
+      startingVerification,
       snackbar,
       snackbarMessage,
       snackbarColor

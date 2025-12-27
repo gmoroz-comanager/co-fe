@@ -83,6 +83,20 @@ const postingModule: Module<PostingState, any> = {
         } finally {
           commit('SET_LOADING', false);
         }
+    },
+    async startVerification({ commit }, botDocumentId: string) {
+        try {
+            return await postingService.startVerification(botDocumentId);
+        } catch (error: any) {
+            throw error;
+        }
+    },
+    async checkVerificationStatus({ commit }, code: string) {
+        try {
+            return await postingService.checkVerificationStatus(code);
+        } catch (error: any) {
+            throw error;
+        }
     }
   }
 };
