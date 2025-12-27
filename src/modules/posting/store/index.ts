@@ -30,6 +30,12 @@ const postingModule: Module<PostingState, any> = {
         if (index !== -1) state.channels[index] = channel;
         else state.channels.push(channel); 
     },
+    UPDATE_CHANNEL(state, updatedChannel: TelegramChannel) {
+        const index = state.channels.findIndex(c => c.documentId === updatedChannel.documentId);
+        if (index !== -1) {
+            state.channels[index] = { ...state.channels[index], ...updatedChannel };
+        }
+    },
     SET_LOADING(state, status) { state.loading = status; },
     SET_ERROR(state, error) { state.error = error; }
   },
@@ -82,6 +88,16 @@ const postingModule: Module<PostingState, any> = {
         try {
             return await postingService.checkVerificationStatus(code);
         } catch (error: any) {
+            throw error;
+        }
+    },
+    async updateChannelColor({ commit }, { documentId, calendarColor }: { documentId: string; calendarColor: string }) {
+        try {
+            const response = await postingService.updateChannelColor(documentId, calendarColor);
+            commit('UPDATE_CHANNEL', response.data);
+            return response.data;
+        } catch (error: any) {
+            commit('SET_ERROR', error.message);
             throw error;
         }
     }

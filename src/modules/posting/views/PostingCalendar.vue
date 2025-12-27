@@ -16,7 +16,7 @@
           <div class="text-caption font-weight-bold mb-1 text-medium-emphasis text-uppercase">Channel</div>
           <v-select
             v-model="selectedChannelId"
-            :items="channels"
+            :items="channelSelectItems"
             item-title="title"
             item-value="documentId"
             placeholder="Select Channel"
@@ -26,8 +26,94 @@
             hide-details
             :loading="loadingChannels"
             bg-color="surface"
-          ></v-select>
+          >
+            <!-- Custom item template -->
+            <template v-slot:item="{ item, props: itemProps }">
+              <v-list-item v-bind="itemProps" :title="undefined">
+                <template v-slot:prepend>
+                  <!-- Color dot (clickable for real channels) -->
+                  <div 
+                    v-if="item.raw.documentId !== 'all'"
+                    class="channel-color-dot mr-3"
+                    :style="{ backgroundColor: getChannelColor(item.raw) }"
+                    @click.stop="openColorPicker(item.raw, $event)"
+                  ></div>
+                  <v-icon v-else size="small" class="mr-3">mdi-view-grid-outline</v-icon>
+                </template>
+                
+                <v-list-item-title>{{ item.raw.title }}</v-list-item-title>
+                
+                <template v-slot:append>
+                  <!-- Pin icon (only for real channels) -->
+                  <v-btn
+                    v-if="item.raw.documentId !== 'all'"
+                    :icon="pinnedChannelId === item.raw.documentId ? 'mdi-pin' : 'mdi-pin-outline'"
+                    :color="pinnedChannelId === item.raw.documentId ? 'primary' : 'grey'"
+                    variant="text"
+                    size="x-small"
+                    @click.stop="togglePinChannel(item.raw.documentId)"
+                  ></v-btn>
+                </template>
+              </v-list-item>
+            </template>
+            
+            <!-- Custom selection template -->
+            <template v-slot:selection="{ item }">
+              <div class="d-flex align-center">
+                <div 
+                  v-if="item.raw.documentId !== 'all'"
+                  class="channel-color-dot mr-2"
+                  :style="{ backgroundColor: getChannelColor(item.raw) }"
+                ></div>
+                <v-icon v-else size="small" class="mr-2">mdi-view-grid-outline</v-icon>
+                <span>{{ item.raw.title }}</span>
+                <v-icon 
+                  v-if="pinnedChannelId && item.raw.documentId === 'all'" 
+                  size="x-small" 
+                  class="ml-2"
+                  color="primary"
+                >mdi-pin</v-icon>
+              </div>
+            </template>
+          </v-select>
+          
+          <!-- Pinned channel indicator when in All Channels view -->
+          <div v-if="selectedChannelId === 'all' && pinnedChannelId" class="mt-2 d-flex align-center text-caption">
+            <v-icon size="x-small" color="primary" class="mr-1">mdi-pin</v-icon>
+            <span class="text-medium-emphasis">New posts go to: </span>
+            <span class="ml-1 font-weight-medium" :style="{ color: getPinnedChannelColor() }">
+              {{ getPinnedChannelTitle() }}
+            </span>
+          </div>
         </div>
+        
+        <!-- Color Picker Menu -->
+        <v-menu
+          v-model="colorPickerOpen"
+          :activator="colorPickerActivator || undefined"
+          :close-on-content-click="false"
+          location="end"
+        >
+          <v-card width="300">
+            <v-card-title class="text-body-1">
+              Channel Color
+            </v-card-title>
+            <v-card-text>
+              <v-color-picker
+                v-model="editingChannelColor"
+                :swatches="colorSwatches"
+                show-swatches
+                hide-inputs
+                mode="hexa"
+              ></v-color-picker>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn variant="text" @click="colorPickerOpen = false">Cancel</v-btn>
+              <v-btn color="primary" variant="flat" @click="saveChannelColor">Save</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-menu>
 
         <!-- Ideas Source -->
         <div>
@@ -141,6 +227,24 @@
           @mouseup:time="onCalendarMouseUp"
           @mouseleave.native="onCalendarMouseLeave"
         >
+          <!-- Custom event rendering with status dot -->
+          <template v-slot:event="{ event }">
+            <div 
+              class="calendar-event-content d-flex align-center px-1"
+              :style="{ backgroundColor: event.color, borderRadius: '4px' }"
+            >
+              <!-- Status dot -->
+              <span 
+                class="status-dot mr-1"
+                :style="{ backgroundColor: getStatusDotColor(event.extendedProps?.status) }"
+              ></span>
+              <!-- Event title -->
+              <span class="event-title text-truncate text-white text-caption">
+                {{ event.name || event.title }}
+              </span>
+            </div>
+          </template>
+          
           <!-- Current time indicator -->
           <template v-slot:day-body="{ date, week }">
             <div
@@ -175,6 +279,42 @@
         </div>
       </v-card>
     </div>
+
+    <!-- Channel Picker Dialog (for two-step post creation) -->
+    <v-dialog v-model="channelPickerDialogOpen" max-width="400" persistent>
+      <v-card>
+        <v-card-title>Select Channel</v-card-title>
+        <v-card-text>
+          <div class="text-body-2 text-medium-emphasis mb-4">
+            Choose which channel to schedule this post to:
+          </div>
+          <v-list density="compact">
+            <v-list-item
+              v-for="channel in channels"
+              :key="channel.documentId"
+              @click="confirmChannelSelection(channel.documentId)"
+              :prepend-icon="undefined"
+              class="channel-picker-item"
+            >
+              <template v-slot:prepend>
+                <div 
+                  class="channel-color-dot mr-3"
+                  :style="{ backgroundColor: getChannelColor(channel) }"
+                ></div>
+              </template>
+              <v-list-item-title>{{ channel.title }}</v-list-item-title>
+              <template v-slot:append>
+                <v-icon v-if="pinnedChannelId === channel.documentId" size="small" color="primary">mdi-pin</v-icon>
+              </template>
+            </v-list-item>
+          </v-list>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn variant="text" @click="cancelChannelSelection">Cancel</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Post Details/Delete Dialog -->
     <v-dialog v-model="detailsDialogOpen" max-width="400">
@@ -228,6 +368,19 @@
 import { defineComponent, ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue';
 import { useStore } from 'vuex';
 import { scheduleService } from '../api/schedule.service';
+import { TelegramChannel } from '../api/posting.service';
+
+// Default color palette for channels without saved colors
+const DEFAULT_COLORS = [
+  '#1976D2', // Blue
+  '#388E3C', // Green  
+  '#F57C00', // Orange
+  '#7B1FA2', // Purple
+  '#C2185B', // Pink
+  '#00796B', // Teal
+  '#5D4037', // Brown
+  '#455A64', // Blue Grey
+];
 
 export default defineComponent({
   name: 'PostingCalendar',
@@ -262,6 +415,27 @@ export default defineComponent({
     const nowY = ref('-10px');
     let timeUpdateInterval: any = null;
     
+    // Pinned channel (only ONE can be pinned)
+    const pinnedChannelId = ref<string | null>(null);
+    
+    // Color picker state
+    const colorPickerOpen = ref(false);
+    const colorPickerActivator = ref<HTMLElement | null>(null);
+    const editingChannel = ref<TelegramChannel | null>(null);
+    const editingChannelColor = ref('#1976D2');
+    
+    // Channel picker dialog (two-step post creation)
+    const channelPickerDialogOpen = ref(false);
+    const pendingDropData = ref<{ idea: any; time: Date } | null>(null);
+    
+    // Color swatches for picker
+    const colorSwatches = [
+      ['#1976D2', '#388E3C', '#F57C00'],
+      ['#7B1FA2', '#C2185B', '#00796B'],
+      ['#5D4037', '#455A64', '#E64A19'],
+      ['#0097A7', '#689F38', '#FFA000'],
+    ];
+    
     // Computed: formatted drop target time for display
     const dropTargetTime = computed(() => {
         if (!lastTimeSlot.value) return null;
@@ -287,8 +461,36 @@ export default defineComponent({
     // Getters
     const ideas = computed(() => store.getters['ideas/allIdeas'].filter((i: any) => i.polishedBody));
     const loadingIdeas = computed(() => store.getters['ideas/isLoading']);
-    const channels = computed(() => store.getters['posting/channels']);
+    const channels = computed(() => store.getters['posting/channels'] as TelegramChannel[]);
     const loadingChannels = computed(() => store.getters['posting/isLoading']);
+    
+    // Channel select items with "All Channels" option
+    const channelSelectItems = computed(() => {
+      const allOption = { documentId: 'all', title: 'All Channels' };
+      return [allOption, ...channels.value];
+    });
+    
+    // Get channel color (from saved or default palette)
+    const getChannelColor = (channel: any): string => {
+      if (!channel || channel.documentId === 'all') return '#757575';
+      if (channel.calendarColor) return channel.calendarColor;
+      // Fallback: assign color based on index
+      const index = channels.value.findIndex(c => c.documentId === channel.documentId);
+      return DEFAULT_COLORS[Math.max(0, index) % DEFAULT_COLORS.length];
+    };
+    
+    // Get pinned channel helpers
+    const getPinnedChannelTitle = (): string => {
+      if (!pinnedChannelId.value) return '';
+      const channel = channels.value.find(c => c.documentId === pinnedChannelId.value);
+      return channel?.title || '';
+    };
+    
+    const getPinnedChannelColor = (): string => {
+      if (!pinnedChannelId.value) return '#757575';
+      const channel = channels.value.find(c => c.documentId === pinnedChannelId.value);
+      return channel ? getChannelColor(channel) : '#757575';
+    };
 
     const filteredIdeas = computed(() => {
         if (!search.value) return ideas.value;
@@ -351,6 +553,83 @@ export default defineComponent({
             case 'failed': return 'error';
             case 'scheduled': return 'primary';
             default: return 'grey';
+        }
+    };
+    
+    // Get actual hex color for status dot in calendar events
+    const getStatusDotColor = (status: string | undefined): string => {
+        switch (status) {
+            case 'published': return '#4CAF50'; // green
+            case 'failed': return '#F44336'; // red
+            case 'scheduled': return '#2196F3'; // blue
+            case 'preview': return '#9E9E9E'; // grey for shadow events
+            default: return '#9E9E9E';
+        }
+    };
+    
+    // ========== Channel Management ==========
+    
+    // Toggle pin on a channel (only one can be pinned)
+    const togglePinChannel = (channelId: string) => {
+        if (pinnedChannelId.value === channelId) {
+            pinnedChannelId.value = null;
+        } else {
+            pinnedChannelId.value = channelId;
+        }
+    };
+    
+    // Open color picker for a channel
+    const openColorPicker = (channel: any, event: MouseEvent) => {
+        if (!channel || channel.documentId === 'all') return;
+        editingChannel.value = channel as TelegramChannel;
+        editingChannelColor.value = getChannelColor(channel);
+        colorPickerActivator.value = event.target as HTMLElement;
+        colorPickerOpen.value = true;
+    };
+    
+    // Save channel color
+    const saveChannelColor = async () => {
+        if (!editingChannel.value) return;
+        
+        try {
+            await store.dispatch('posting/updateChannelColor', {
+                documentId: editingChannel.value.documentId,
+                calendarColor: editingChannelColor.value
+            });
+            colorPickerOpen.value = false;
+            editingChannel.value = null;
+            // Refresh events to update colors
+            await fetchEvents();
+        } catch (err) {
+            console.error('Failed to update channel color:', err);
+        }
+    };
+    
+    // ========== Two-Step Post Creation ==========
+    
+    // Cancel channel selection
+    const cancelChannelSelection = () => {
+        channelPickerDialogOpen.value = false;
+        pendingDropData.value = null;
+    };
+    
+    // Confirm channel selection and create post
+    const confirmChannelSelection = async (channelId: string) => {
+        if (!pendingDropData.value) return;
+        
+        try {
+            await scheduleService.createScheduledPost({
+                idea: pendingDropData.value.idea.documentId,
+                scheduledAt: pendingDropData.value.time.toISOString(),
+                channel: channelId,
+                status: 'scheduled'
+            });
+            
+            channelPickerDialogOpen.value = false;
+            pendingDropData.value = null;
+            await fetchEvents();
+        } catch (err) {
+            console.error('Failed to create scheduled post:', err);
         }
     };
 
@@ -422,8 +701,14 @@ export default defineComponent({
             store.dispatch('posting/fetchChannels')
         ]);
         
-        if (channels.value.length > 0 && !selectedChannelId.value) {
-            selectedChannelId.value = channels.value[0].documentId;
+        // Default to "all" channels view
+        if (!selectedChannelId.value) {
+            selectedChannelId.value = 'all';
+        }
+        
+        // If there's only one channel, pin it by default
+        if (channels.value.length === 1) {
+            pinnedChannelId.value = channels.value[0].documentId;
         }
 
         // Setup current time indicator
@@ -440,8 +725,11 @@ export default defineComponent({
     });
 
     watch(selectedChannelId, async (newId) => {
-        if (newId) await fetchEvents();
-        else events.value = [];
+        if (newId) {
+            await fetchEvents();
+        } else {
+            events.value = [];
+        }
     });
 
     watch(focus, () => {
@@ -474,27 +762,43 @@ export default defineComponent({
         
         try {
             const result = await scheduleService.getScheduledPosts(start, end);
-            const posts = result.data.filter((p: any) => 
-                !p.channel || p.channel.documentId === selectedChannelId.value
-            );
+            
+            // Filter based on selected channel (or show all)
+            const isAllChannels = selectedChannelId.value === 'all';
+            const posts = isAllChannels 
+                ? result.data 
+                : result.data.filter((p: any) => 
+                    !p.channel || p.channel.documentId === selectedChannelId.value
+                  );
 
             events.value = posts.map((post: any) => {
                 const startTime = new Date(post.scheduledAt).getTime();
                 const endTime = startTime + 30 * 60 * 1000; // 30 min duration
+                
+                // Get channel color for event background
+                let eventColor = 'primary';
+                if (post.channel) {
+                    const channel = channels.value.find(c => c.documentId === post.channel.documentId);
+                    if (channel) {
+                        eventColor = getChannelColor(channel);
+                    }
+                }
+                
                 return {
                     id: post.documentId,
                     name: post.idea?.title || 'Scheduled Post',  // VCalendar uses 'name' not 'title'
                     title: post.idea?.title || 'Scheduled Post', // Keep for our template
                     start: startTime,
                     end: endTime,
-                    color: post.status === 'published' ? 'success' : 'primary',
+                    color: eventColor,
                     timed: true,
                     extendedProps: {
                         status: post.status,
                         channel: post.channel ? {
                             id: post.channel.id,
                             documentId: post.channel.documentId,
-                            title: post.channel.title
+                            title: post.channel.title,
+                            calendarColor: post.channel.calendarColor
                         } : null
                     }
                 };
@@ -723,20 +1027,51 @@ export default defineComponent({
         
         // If we have a valid drop position, create the post
         if (draggedIdea.value && lastTimeSlot.value && selectedChannelId.value) {
-            try {
-                const time = roundTime(toTime(lastTimeSlot.value));
-                const targetDate = new Date(time);
-                
-                await scheduleService.createScheduledPost({
-                    idea: draggedIdea.value.documentId,
-                    scheduledAt: targetDate.toISOString(),
-                    channel: selectedChannelId.value,
-                    status: 'scheduled'
-                });
-                
-                await fetchEvents();
-            } catch (err) {
-                console.error('Failed to create scheduled post:', err);
+            const time = roundTime(toTime(lastTimeSlot.value));
+            const targetDate = new Date(time);
+            
+            // Determine target channel
+            let targetChannelId: string | null = null;
+            
+            if (selectedChannelId.value === 'all') {
+                // In "All Channels" view
+                if (pinnedChannelId.value) {
+                    // Use pinned channel directly
+                    targetChannelId = pinnedChannelId.value;
+                } else {
+                    // Show channel picker dialog (two-step creation)
+                    pendingDropData.value = {
+                        idea: draggedIdea.value,
+                        time: targetDate
+                    };
+                    channelPickerDialogOpen.value = true;
+                    
+                    // Reset drag state but don't create post yet
+                    isDragging.value = false;
+                    draggedIdea.value = null;
+                    shadowEvent.value = null;
+                    lastTimeSlot.value = null;
+                    return;
+                }
+            } else {
+                // Specific channel selected
+                targetChannelId = selectedChannelId.value;
+            }
+            
+            // Create post immediately
+            if (targetChannelId) {
+                try {
+                    await scheduleService.createScheduledPost({
+                        idea: draggedIdea.value.documentId,
+                        scheduledAt: targetDate.toISOString(),
+                        channel: targetChannelId,
+                        status: 'scheduled'
+                    });
+                    
+                    await fetchEvents();
+                } catch (err) {
+                    console.error('Failed to create scheduled post:', err);
+                }
             }
         }
         
@@ -862,11 +1197,29 @@ export default defineComponent({
         dragGhostStyle,
         dropTargetTime,
         nowY,
+        // Channel management
+        channelSelectItems,
+        pinnedChannelId,
+        colorPickerOpen,
+        colorPickerActivator,
+        editingChannelColor,
+        colorSwatches,
+        channelPickerDialogOpen,
+        // Functions
         formatDate,
         formatTime,
         formatEventTime,
         getEventColorClass,
         getStatusColor,
+        getStatusDotColor,
+        getChannelColor,
+        getPinnedChannelTitle,
+        getPinnedChannelColor,
+        togglePinChannel,
+        openColorPicker,
+        saveChannelColor,
+        cancelChannelSelection,
+        confirmChannelSelection,
         changeView,
         deletePost,
         onIdeaMouseDown,
@@ -954,5 +1307,51 @@ export default defineComponent({
     border-radius: 50%;
     margin-top: -5px;
     margin-left: -6.5px;
+}
+
+/* Channel color dot */
+.channel-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+}
+.channel-color-dot:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Channel picker item */
+.channel-picker-item {
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+.channel-picker-item:hover {
+    background-color: rgba(var(--v-theme-primary), 0.08);
+}
+
+/* Calendar event content */
+.calendar-event-content {
+    width: 100%;
+    height: 100%;
+    min-height: 20px;
+    padding: 2px 4px;
+}
+
+/* Status dot in events */
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    border: 1px solid white;
+    box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+.event-title {
+    font-size: 11px;
+    line-height: 1.2;
 }
 </style>

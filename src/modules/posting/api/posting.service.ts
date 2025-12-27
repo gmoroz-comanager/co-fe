@@ -14,6 +14,7 @@ export interface TelegramChannel {
   title: string;
   username?: string;
   bot?: TelegramBot;
+  calendarColor?: string;
 }
 
 class PostingService {
@@ -52,6 +53,13 @@ class PostingService {
       channelDocumentId
     });
     return response.data.data;
+  }
+
+  async updateChannelColor(documentId: string, calendarColor: string): Promise<{ data: TelegramChannel }> {
+    const response = await httpService.put<{ data: TelegramChannel }>(`/telegram-channels/${documentId}`, {
+      data: { calendarColor }
+    });
+    return response.data;
   }
 }
 
