@@ -9,6 +9,12 @@ export interface IdeasStatusCounts {
   published: number;
 }
 
+export interface SessionGroup {
+  sessionId: string | null;
+  sessionTitle: string;
+  ideas: Idea[];
+}
+
 export interface IdeasState {
   ideas: Idea[];
   currentIdea: Idea | null;
@@ -71,7 +77,41 @@ const ideasModule: Module<IdeasState, any> = {
     isLoading: (state): boolean => state.loading,
     isBackgroundLoading: (state): boolean => state.backgroundLoading,
     filters: (state): IdeaFilters => state.filters,
-    pagination: (state): any => state.pagination
+    pagination: (state): any => state.pagination,
+    
+    /**
+     * Groups ideas by their session for swimlane view
+     * Returns an array of SessionGroup objects with ideas grouped by session
+     * Orphan ideas (no session) are grouped under "Uncategorized"
+     * Sessions are sorted by the newest idea's createdAt (newest first)
+     */
+    ideasGroupedBySession: (state): SessionGroup[] => {
+      const grouped = new Map<string | null, SessionGroup>();
+      
+      for (const idea of state.ideas) {
+        const sessionId = idea.session?.documentId ?? null;
+        const sessionTitle = idea.session?.title ?? 'Uncategorized';
+        
+        if (!grouped.has(sessionId)) {
+          grouped.set(sessionId, { sessionId, sessionTitle, ideas: [] });
+        }
+        grouped.get(sessionId)!.ideas.push(idea);
+      }
+      
+      // Sort: sessions by newest idea's createdAt (newest first), uncategorized last
+      return Array.from(grouped.values()).sort((a, b) => {
+        // Uncategorized always last
+        if (!a.sessionId) return 1;
+        if (!b.sessionId) return -1;
+        
+        // Get the newest idea's date from each group (ideas are already sorted by createdAt desc)
+        const aNewestDate = a.ideas[0]?.createdAt || '';
+        const bNewestDate = b.ideas[0]?.createdAt || '';
+        
+        // Sort descending (newest first)
+        return bNewestDate.localeCompare(aNewestDate);
+      });
+    }
   },
   
   mutations: {

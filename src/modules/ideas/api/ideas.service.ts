@@ -88,8 +88,9 @@ class IdeasService {
     // Build query parameters
     const queryParams = new URLSearchParams();
     
-    // Always populate related entities
-    queryParams.append('populate', '*');
+    // Populate only session with specific fields (optimized for list view)
+    queryParams.append('populate[session][fields][0]', 'title');
+    queryParams.append('populate[session][fields][1]', 'documentId');
     
     // Add pagination
     if (filters.page) {
