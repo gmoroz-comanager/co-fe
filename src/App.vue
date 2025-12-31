@@ -15,9 +15,9 @@
         Home
       </v-btn>
       
-      <v-btn to="/audio" text>
-        <v-icon left>mdi-waveform</v-icon>
-        Audio
+      <v-btn to="/sessions" text>
+        <v-icon left>mdi-folder-multiple</v-icon>
+        Sessions
       </v-btn>
       <v-btn to="/ideas" text>
         <v-icon left>mdi-lightbulb-outline</v-icon>

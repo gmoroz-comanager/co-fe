@@ -7,6 +7,7 @@ import homeModule from '@/modules/home/store';
 import { strategyModule } from '@/modules/strategy/store/strategy.store';
 import contactsModule from '@/modules/contacts/store';
 import postingModule from '@/modules/posting/store';
+import sessionsModule from '@/modules/sessions/store/sessions.store';
 
 export interface RootState {
   // Define root state properties here if any
@@ -22,6 +23,7 @@ const store = createStore<RootState>({
     home: homeModule,
     contacts: contactsModule,
     posting: postingModule,
+    sessions: sessionsModule,
   },
 });
 

@@ -10,6 +10,7 @@ import onboardingRoutes from '@/modules/onboarding/router';
 import brandProfileRoutes from '@/modules/brand-profile/router';
 import contactsRoutes from '@/modules/contacts/router';
 import postingRoutes from '@/modules/posting/router';
+import sessionsRoutes from '@/modules/sessions/router';
 
 const routes: Array<RouteRecordRaw> = [
   ...homeRoutes,
@@ -21,6 +22,7 @@ const routes: Array<RouteRecordRaw> = [
   ...contactsRoutes,
   ...onboardingRoutes,
   ...postingRoutes,
+  ...sessionsRoutes,
 ];
 
 const router = createRouter({
