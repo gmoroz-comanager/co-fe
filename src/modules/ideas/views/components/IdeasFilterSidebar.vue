@@ -138,6 +138,7 @@ export default defineComponent({
       { title: 'Any', value: '' },
       { title: 'New', value: 'new' },
       { title: 'Ready to Publish', value: 'readyToPublish' },
+      { title: 'Planned', value: 'planned' },
       { title: 'Published', value: 'published' },
     ];
 
