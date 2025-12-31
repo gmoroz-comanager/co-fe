@@ -188,8 +188,8 @@ export default defineComponent({
     const audioFiles = computed(() => {
       if (!audioSource.value) return [];
       const files = audioSource.value.audio_file;
+      // Strapi v5 returns arrays directly without data wrapper
       if (Array.isArray(files)) return files;
-      if (files?.data && Array.isArray(files.data)) return files.data;
       return [];
     });
 

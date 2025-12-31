@@ -424,9 +424,10 @@ export default {
             // Optional: open the message
              window.open(result.url, '_blank');
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error posting to Telegram:', err);
-        snackbarMessage.value = err.response?.data?.error?.message || 'Failed to post to Telegram';
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        snackbarMessage.value = axiosError.response?.data?.error?.message || 'Failed to post to Telegram';
         snackbarColor.value = 'error';
         snackbar.value = true;
       } finally {
@@ -439,12 +440,13 @@ export default {
       error.value = null;
       
       try {
-        const response = await ideasService.getIdea(route.params.id);
+        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        const response = await ideasService.getIdea(ideaId);
         // Strapi v5 returns data directly without attributes wrapper
         idea.value = response.data;
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error fetching idea:', err);
-        error.value = err.message || 'Failed to fetch idea details';
+        error.value = err instanceof Error ? err.message : 'Failed to fetch idea details';
       } finally {
         loading.value = false;
       }
@@ -453,7 +455,8 @@ export default {
     const handleLike = async () => {
       likeLoading.value = true;
       try {
-        await ideasService.likeIdea(route.params.id);
+        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        await ideasService.likeIdea(ideaId);
         snackbarMessage.value = 'You liked this idea!';
         snackbarColor.value = 'success';
         snackbar.value = true;
@@ -470,7 +473,8 @@ export default {
     const handleDislike = async () => {
       dislikeLoading.value = true;
       try {
-        await ideasService.dislikeIdea(route.params.id);
+        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        await ideasService.dislikeIdea(ideaId);
         snackbarMessage.value = 'You disliked this idea.';
         snackbarColor.value = 'warning';
         snackbar.value = true;
@@ -491,7 +495,8 @@ export default {
     const submitPolishRequest = async () => {
       polishLoading.value = true;
       try {
-        const response = await ideasService.polishIdea(route.params.id, polishFeedback.value);
+        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        const response = await ideasService.polishIdea(ideaId, polishFeedback.value);
         
         if (response.data) {
           idea.value = response.data;
@@ -503,9 +508,10 @@ export default {
           closePolishMenu();
           polishFeedback.value = ''; // Clear feedback on success
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('Error polishing idea:', err);
-        snackbarMessage.value = err.response?.data?.error?.message || 'Failed to polish idea';
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        snackbarMessage.value = axiosError.response?.data?.error?.message || 'Failed to polish idea';
         snackbarColor.value = 'error';
         snackbar.value = true;
       } finally {
@@ -513,11 +519,11 @@ export default {
       }
     };
     
-    const formatDate = (dateString) => {
+    const formatDate = (dateString: string): string => {
       return formatDateTime(dateString);
     };
     
-    const getStatusColor = (status) => {
+    const getStatusColor = (status: string): string => {
       switch (status) {
         case 'new': return 'red';
         case 'readyToPublish': return 'orange';
@@ -526,9 +532,9 @@ export default {
       }
     };
     
-    const parseTags = (tagsString) => {
+    const parseTags = (tagsString: string): string[] => {
       if (!tagsString) return [];
-      return tagsString.split(',').map(tag => tag.trim());
+      return tagsString.split(',').map((tag: string) => tag.trim());
     };
     
     onMounted(() => {
