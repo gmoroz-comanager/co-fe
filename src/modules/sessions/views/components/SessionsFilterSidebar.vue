@@ -55,7 +55,6 @@
           variant="outlined"
           density="compact"
           hide-details
-          clearable
           @update:model-value="$emit('update:statusFilter', $event)"
         />
       </div>
@@ -65,32 +64,21 @@
         <label class="filter-label">Participant</label>
         <v-select
           :model-value="participantFilter"
-          :items="contactItems"
-          item-title="name"
-          item-value="documentId"
+          :items="participantOptions"
+          item-title="title"
+          item-value="value"
           variant="outlined"
           density="compact"
           hide-details
-          clearable
-          placeholder="Select participant"
-          @update:model-value="(val) => { console.log('[Sidebar] participant selected:', val); $emit('update:participantFilter', val); }"
+          @update:model-value="$emit('update:participantFilter', $event)"
         />
       </div>
 
-      <!-- Apply Filters Button -->
-      <v-btn
-        color="primary"
-        block
-        class="mt-4"
-        @click="$emit('apply-filters')"
-      >
-        Apply Filters
-      </v-btn>
-
+      <!-- Clear Filters Button -->
       <v-btn
         variant="text"
         block
-        class="mt-2"
+        class="mt-4"
         @click="$emit('clear-filters')"
       >
         Clear All
@@ -144,7 +132,6 @@ export default defineComponent({
     'update:dateRange',
     'update:statusFilter',
     'update:participantFilter',
-    'apply-filters',
     'clear-filters',
   ],
 
@@ -152,14 +139,22 @@ export default defineComponent({
     const dateMenuOpen = ref(false);
 
     const statusOptions = [
-      { title: 'All', value: '' },
+      { title: 'Any', value: '' },
       { title: 'Draft', value: 'draft' },
       { title: 'Processing', value: 'processing' },
       { title: 'Ready', value: 'ready' },
       { title: 'Error', value: 'error' },
     ];
 
-    const contactItems = computed(() => props.contacts);
+    // Build participant options with "Any" as the first option
+    const participantOptions = computed(() => {
+      const anyOption = { title: 'Any', value: '' };
+      const contactOptions = props.contacts.map(contact => ({
+        title: contact.name,
+        value: contact.documentId,
+      }));
+      return [anyOption, ...contactOptions];
+    });
 
     const handleDateRangeChange = (value: Date[] | null) => {
       emit('update:dateRange', value || []);
@@ -173,7 +168,7 @@ export default defineComponent({
     return {
       dateMenuOpen,
       statusOptions,
-      contactItems,
+      participantOptions,
       handleDateRangeChange,
     };
   },

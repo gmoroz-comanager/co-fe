@@ -9,11 +9,10 @@
       :participant-filter="participantFilter"
       :contacts="contacts"
       @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
-      @update:search-query="onSearchQueryChange"
-      @update:date-range="dateRange = $event"
-      @update:status-filter="statusFilter = $event"
-      @update:participant-filter="(val) => { console.log('[SessionsList] received participant:', val); participantFilter = val; }"
-      @apply-filters="applyFilters"
+      @update:search-query="onFilterChange('search', $event)"
+      @update:date-range="onFilterChange('dateRange', $event)"
+      @update:status-filter="onFilterChange('status', $event)"
+      @update:participant-filter="onFilterChange('participant', $event)"
       @clear-filters="clearFilters"
     />
 
@@ -45,7 +44,12 @@
       <div class="sessions-table" v-if="!loading">
         <!-- Table Header -->
         <div class="table-header">
-          <div class="col-date">Date</div>
+          <div class="col-date sortable-header" @click="toggleDateSort">
+            <span>Date</span>
+            <v-icon size="16" class="sort-icon">
+              {{ sortOrder === 'desc' ? 'mdi-arrow-down' : 'mdi-arrow-up' }}
+            </v-icon>
+          </div>
           <div class="col-title">Title</div>
           <div class="col-participants">Participants</div>
           <div class="col-sources">Sources</div>
@@ -275,6 +279,9 @@ export default defineComponent({
     const statusFilter = ref('');
     const participantFilter = ref('');
 
+    // Sorting
+    const sortOrder = ref<'asc' | 'desc'>('desc');
+
     // New session form
     const newSession = reactive({
       title: '',
@@ -335,6 +342,10 @@ export default defineComponent({
       router.push({ name: 'SessionDetail', params: { id: documentId } });
     };
 
+    // Unified debounce for all filters
+    let filterTimeout: number | null = null;
+    const DEBOUNCE_DELAY = 500;
+
     const applyFilters = async () => {
       let dateStart: string | undefined;
       let dateEnd: string | undefined;
@@ -352,27 +363,58 @@ export default defineComponent({
         dateEnd,
         status: statusFilter.value || undefined,
         participantId: participantFilter.value || undefined,
+        sortBy: 'createdAt' as const,
+        sortOrder: sortOrder.value,
       };
-      console.log('[SessionsList] applyFilters - participantFilter.value:', participantFilter.value);
-      console.log('[SessionsList] applyFilters - filtersPayload:', filtersPayload);
+      console.log('[SessionsList] applyFilters:', filtersPayload);
       await store.dispatch('sessions/setFilters', filtersPayload);
     };
 
+    const debouncedApplyFilters = () => {
+      if (filterTimeout) clearTimeout(filterTimeout);
+      filterTimeout = window.setTimeout(() => {
+        applyFilters();
+      }, DEBOUNCE_DELAY);
+    };
+
+    // Universal handler for all filter changes
+    const onFilterChange = (filterType: string, value: any) => {
+      console.log(`[SessionsList] Filter changed: ${filterType} =`, value);
+      
+      switch (filterType) {
+        case 'search':
+          searchQuery.value = value;
+          break;
+        case 'dateRange':
+          dateRange.value = value;
+          break;
+        case 'status':
+          statusFilter.value = value;
+          break;
+        case 'participant':
+          participantFilter.value = value;
+          break;
+      }
+      
+      debouncedApplyFilters();
+    };
+
+    // Toggle date sorting
+    const toggleDateSort = () => {
+      sortOrder.value = sortOrder.value === 'desc' ? 'asc' : 'desc';
+      applyFilters();
+    };
+
     const clearFilters = async () => {
+      // Clear timeout to prevent pending filter applications
+      if (filterTimeout) clearTimeout(filterTimeout);
+      
       searchQuery.value = '';
       dateRange.value = [];
       statusFilter.value = '';
       participantFilter.value = '';
-      await store.dispatch('sessions/setFilters', {});
-    };
-
-    let searchTimeout: number | null = null;
-    const onSearchQueryChange = (value: string) => {
-      searchQuery.value = value;
-      if (searchTimeout) clearTimeout(searchTimeout);
-      searchTimeout = window.setTimeout(() => {
-        applyFilters();
-      }, 300);
+      sortOrder.value = 'desc';
+      await store.dispatch('sessions/setFilters', { sortBy: 'createdAt', sortOrder: 'desc' });
     };
 
     const createSession = async () => {
@@ -452,6 +494,7 @@ export default defineComponent({
       dateRange,
       statusFilter,
       participantFilter,
+      sortOrder,
       newSession,
       snackbar,
 
@@ -465,9 +508,9 @@ export default defineComponent({
       getStatusColor,
       toggleSession,
       openSession,
-      applyFilters,
       clearFilters,
-      onSearchQueryChange,
+      onFilterChange,
+      toggleDateSort,
       createSession,
       confirmDelete,
       deleteSession,
@@ -551,6 +594,31 @@ export default defineComponent({
 
 .col-expand {
   text-align: center;
+}
+
+/* Sortable Header */
+.sortable-header {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.2s;
+  user-select: none;
+}
+
+.sortable-header:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.sort-icon {
+  opacity: 0.7;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.sortable-header:hover .sort-icon {
+  opacity: 1;
 }
 
 /* Expanded Card */

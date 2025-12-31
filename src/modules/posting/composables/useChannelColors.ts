@@ -45,6 +45,7 @@ export function useChannelColors({ channels }: UseChannelColorsOptions) {
       case 'published': return 'success';
       case 'failed': return 'error';
       case 'scheduled': return 'primary';
+      case 'publishing': return 'warning';
       default: return 'grey';
     }
   };
@@ -57,6 +58,7 @@ export function useChannelColors({ channels }: UseChannelColorsOptions) {
       case 'published': return '#4CAF50'; // green
       case 'failed': return '#F44336'; // red
       case 'scheduled': return '#2196F3'; // blue
+      case 'publishing': return '#FF9800'; // orange - in progress
       case 'preview': return '#9E9E9E'; // grey for shadow events
       case 'loading': return '#9E9E9E'; // grey for loading state
       default: return '#9E9E9E';

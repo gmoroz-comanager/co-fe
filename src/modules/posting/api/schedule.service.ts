@@ -6,7 +6,7 @@ export interface ScheduledPost {
   scheduledAt: string;
   idea: any; // Replace with strict Idea type if available circular dependency
   channel: any;
-  status: 'scheduled' | 'published' | 'failed';
+  status: 'scheduled' | 'publishing' | 'published' | 'failed';
 }
 
 export class ScheduleService {

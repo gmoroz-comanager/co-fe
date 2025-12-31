@@ -112,6 +112,8 @@ export interface SessionFilters {
   hasIdeas?: boolean;
   hasPosts?: boolean;
   sourceTypes?: string[];
+  sortBy?: 'createdAt' | 'date_start';
+  sortOrder?: 'asc' | 'desc';
 }
 
 export interface CreateSessionData {
@@ -136,7 +138,9 @@ class SessionsService {
    */
   async getSessions(filters?: SessionFilters): Promise<SessionsResponse> {
     try {
-      let queryParams = 'populate[audio_sources][populate]=audio_file&populate[ideas]=true&populate[participants]=true&sort=createdAt:desc';
+      const sortField = filters?.sortBy || 'createdAt';
+      const sortOrder = filters?.sortOrder || 'desc';
+      let queryParams = `populate[audio_sources][populate]=audio_file&populate[ideas]=true&populate[participants]=true&sort=${sortField}:${sortOrder}`;
 
       if (filters?.status) {
         queryParams += `&filters[work_status][$eq]=${filters.status}`;
