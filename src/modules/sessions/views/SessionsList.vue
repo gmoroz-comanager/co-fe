@@ -188,6 +188,20 @@
             </div>
           </transition>
         </div>
+
+        <!-- Pagination -->
+        <div v-if="pagination.pageCount > 1" class="pagination-container">
+          <v-pagination
+            :model-value="pagination.page"
+            :length="pagination.pageCount"
+            :total-visible="5"
+            rounded="circle"
+            @update:model-value="onPageChange"
+          />
+          <span class="pagination-info">
+            {{ pagination.total }} sessions total
+          </span>
+        </div>
       </div>
     </main>
 
@@ -299,6 +313,7 @@ export default defineComponent({
     const sessions = computed(() => store.getters['sessions/sessions']);
     const loading = computed(() => store.getters['sessions/isLoading']);
     const contacts = computed(() => store.getters['contacts/allItems']);
+    const pagination = computed(() => store.getters['sessions/pagination']);
 
     // Methods
     const showMessage = (message: string, color = 'success') => {
@@ -405,6 +420,11 @@ export default defineComponent({
       applyFilters();
     };
 
+    // Pagination handler
+    const onPageChange = (page: number) => {
+      store.dispatch('sessions/setPage', page);
+    };
+
     const clearFilters = async () => {
       // Clear timeout to prevent pending filter applications
       if (filterTimeout) clearTimeout(filterTimeout);
@@ -502,6 +522,7 @@ export default defineComponent({
       sessions,
       loading,
       contacts,
+      pagination,
 
       // Methods
       formatDate,
@@ -511,6 +532,7 @@ export default defineComponent({
       clearFilters,
       onFilterChange,
       toggleDateSort,
+      onPageChange,
       createSession,
       confirmDelete,
       deleteSession,
@@ -712,6 +734,21 @@ export default defineComponent({
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid #e0e0e0;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 13px;
 }
 
 /* Empty State */

@@ -114,6 +114,8 @@ export interface SessionFilters {
   sourceTypes?: string[];
   sortBy?: 'createdAt' | 'date_start';
   sortOrder?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
 }
 
 export interface CreateSessionData {
@@ -164,6 +166,11 @@ class SessionsService {
       if (filters?.participantId) {
         queryParams += `&filters[participants][documentId][$eq]=${filters.participantId}`;
       }
+
+      // Pagination
+      const page = filters?.page || 1;
+      const pageSize = filters?.pageSize || 10;
+      queryParams += `&pagination[page]=${page}&pagination[pageSize]=${pageSize}`;
 
       console.log('[SessionsService] getSessions query:', queryParams);
       console.log('[SessionsService] filters:', filters);

@@ -8,11 +8,19 @@ import {
   UpdateSessionData,
 } from '../api/sessions.service';
 
+export interface PaginationMeta {
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  total: number;
+}
+
 export interface SessionsState {
   sessions: Session[];
   currentSession: Session | null;
   processingStatus: ProcessingStatus | null;
   filters: SessionFilters;
+  pagination: PaginationMeta;
   loading: boolean;
   error: string | null;
   pollingInterval: number | null;
@@ -26,6 +34,12 @@ const sessionsModule: Module<SessionsState, any> = {
     currentSession: null,
     processingStatus: null,
     filters: {},
+    pagination: {
+      page: 1,
+      pageSize: 10,
+      pageCount: 1,
+      total: 0,
+    },
     loading: false,
     error: null,
     pollingInterval: null,
@@ -36,6 +50,7 @@ const sessionsModule: Module<SessionsState, any> = {
     currentSession: (state) => state.currentSession,
     processingStatus: (state) => state.processingStatus,
     filters: (state) => state.filters,
+    pagination: (state) => state.pagination,
     isLoading: (state) => state.loading,
     error: (state) => state.error,
 
@@ -83,6 +98,10 @@ const sessionsModule: Module<SessionsState, any> = {
       state.filters = filters;
     },
 
+    SET_PAGINATION(state, pagination: PaginationMeta) {
+      state.pagination = pagination;
+    },
+
     SET_LOADING(state, loading: boolean) {
       state.loading = loading;
     },
@@ -122,6 +141,9 @@ const sessionsModule: Module<SessionsState, any> = {
       try {
         const response = await sessionsService.getSessions(state.filters);
         commit('SET_SESSIONS', response.data);
+        if (response.meta?.pagination) {
+          commit('SET_PAGINATION', response.meta.pagination);
+        }
       } catch (error: any) {
         commit('SET_ERROR', error.message || 'Failed to fetch sessions');
         throw error;
@@ -288,10 +310,19 @@ const sessionsModule: Module<SessionsState, any> = {
     },
 
     /**
-     * Set filters and refetch
+     * Set filters and refetch (resets to page 1)
      */
     async setFilters({ commit, dispatch }, filters: SessionFilters) {
-      commit('SET_FILTERS', filters);
+      // Reset to page 1 when filters change
+      commit('SET_FILTERS', { ...filters, page: 1 });
+      await dispatch('fetchSessions');
+    },
+
+    /**
+     * Set page and refetch
+     */
+    async setPage({ commit, dispatch, state }, page: number) {
+      commit('SET_FILTERS', { ...state.filters, page });
       await dispatch('fetchSessions');
     },
 
