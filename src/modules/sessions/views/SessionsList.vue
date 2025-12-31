@@ -1,89 +1,21 @@
 <template>
   <div class="sessions-page">
     <!-- Sidebar Filters -->
-    <aside class="filters-sidebar" :class="{ collapsed: sidebarCollapsed }">
-      <div class="sidebar-header">
-        <h3 v-if="!sidebarCollapsed">Filters</h3>
-        <v-btn
-          icon
-          variant="text"
-          size="small"
-          @click="sidebarCollapsed = !sidebarCollapsed"
-        >
-          <v-icon>{{ sidebarCollapsed ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-        </v-btn>
-      </div>
-
-      <div v-if="!sidebarCollapsed" class="filters-content">
-        <!-- Search -->
-        <div class="filter-group">
-          <v-text-field
-            v-model="searchQuery"
-            label="Search sessions..."
-            prepend-inner-icon="mdi-magnify"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-            @update:model-value="debouncedSearch"
-          />
-        </div>
-
-        <!-- Date Range -->
-        <div class="filter-group">
-          <label class="filter-label">Date Range</label>
-          <v-text-field
-            v-model="dateStart"
-            type="date"
-            label="From"
-            variant="outlined"
-            density="compact"
-            hide-details
-            class="mb-2"
-          />
-          <v-text-field
-            v-model="dateEnd"
-            type="date"
-            label="To"
-            variant="outlined"
-            density="compact"
-            hide-details
-          />
-        </div>
-
-        <!-- Status Filter -->
-        <div class="filter-group">
-          <label class="filter-label">Status</label>
-          <v-select
-            v-model="statusFilter"
-            :items="statusOptions"
-            variant="outlined"
-            density="compact"
-            hide-details
-            clearable
-          />
-        </div>
-
-        <!-- Apply Filters Button -->
-        <v-btn
-          color="primary"
-          block
-          class="mt-4"
-          @click="applyFilters"
-        >
-          Apply Filters
-        </v-btn>
-
-        <v-btn
-          variant="text"
-          block
-          class="mt-2"
-          @click="clearFilters"
-        >
-          Clear All
-        </v-btn>
-      </div>
-    </aside>
+    <SessionsFilterSidebar
+      :is-collapsed="sidebarCollapsed"
+      :search-query="searchQuery"
+      :date-range="dateRange"
+      :status-filter="statusFilter"
+      :participant-filter="participantFilter"
+      :contacts="contacts"
+      @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
+      @update:search-query="onSearchQueryChange"
+      @update:date-range="dateRange = $event"
+      @update:status-filter="statusFilter = $event"
+      @update:participant-filter="(val) => { console.log('[SessionsList] received participant:', val); participantFilter = val; }"
+      @apply-filters="applyFilters"
+      @clear-filters="clearFilters"
+    />
 
     <!-- Main Content -->
     <main class="sessions-content">
@@ -266,17 +198,13 @@
             variant="outlined"
             :rules="[v => !!v || 'Title is required']"
           />
-          <v-text-field
+          <v-date-input
             v-model="newSession.date_start"
             label="Start Date"
-            type="datetime-local"
             variant="outlined"
-          />
-          <v-text-field
-            v-model="newSession.date_end"
-            label="End Date"
-            type="datetime-local"
-            variant="outlined"
+            prepend-icon=""
+            prepend-inner-icon="mdi-calendar"
+            clearable
           />
         </v-card-text>
         <v-card-actions>
@@ -319,9 +247,14 @@ import { defineComponent, ref, computed, onMounted, reactive } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { Session } from '../api/sessions.service';
+import SessionsFilterSidebar from './components/SessionsFilterSidebar.vue';
 
 export default defineComponent({
   name: 'SessionsList',
+
+  components: {
+    SessionsFilterSidebar,
+  },
 
   setup() {
     const store = useStore();
@@ -338,23 +271,14 @@ export default defineComponent({
 
     // Filters
     const searchQuery = ref('');
-    const dateStart = ref('');
-    const dateEnd = ref('');
+    const dateRange = ref<Date[]>([]);
     const statusFilter = ref('');
-
-    const statusOptions = [
-      { title: 'All', value: '' },
-      { title: 'Draft', value: 'draft' },
-      { title: 'Processing', value: 'processing' },
-      { title: 'Ready', value: 'ready' },
-      { title: 'Error', value: 'error' },
-    ];
+    const participantFilter = ref('');
 
     // New session form
     const newSession = reactive({
       title: '',
-      date_start: '',
-      date_end: '',
+      date_start: null as Date | null,
     });
 
     // Snackbar
@@ -367,6 +291,7 @@ export default defineComponent({
     // Computed
     const sessions = computed(() => store.getters['sessions/sessions']);
     const loading = computed(() => store.getters['sessions/isLoading']);
+    const contacts = computed(() => store.getters['contacts/allItems']);
 
     // Methods
     const showMessage = (message: string, color = 'success') => {
@@ -411,24 +336,39 @@ export default defineComponent({
     };
 
     const applyFilters = async () => {
-      await store.dispatch('sessions/setFilters', {
+      let dateStart: string | undefined;
+      let dateEnd: string | undefined;
+
+      if (dateRange.value.length >= 2) {
+        // Sort dates to ensure start is before end
+        const sortedDates = [...dateRange.value].sort((a, b) => a.getTime() - b.getTime());
+        dateStart = sortedDates[0].toISOString().split('T')[0];
+        dateEnd = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
+      }
+
+      const filtersPayload = {
         search: searchQuery.value || undefined,
-        dateStart: dateStart.value || undefined,
-        dateEnd: dateEnd.value || undefined,
+        dateStart,
+        dateEnd,
         status: statusFilter.value || undefined,
-      });
+        participantId: participantFilter.value || undefined,
+      };
+      console.log('[SessionsList] applyFilters - participantFilter.value:', participantFilter.value);
+      console.log('[SessionsList] applyFilters - filtersPayload:', filtersPayload);
+      await store.dispatch('sessions/setFilters', filtersPayload);
     };
 
     const clearFilters = async () => {
       searchQuery.value = '';
-      dateStart.value = '';
-      dateEnd.value = '';
+      dateRange.value = [];
       statusFilter.value = '';
+      participantFilter.value = '';
       await store.dispatch('sessions/setFilters', {});
     };
 
     let searchTimeout: number | null = null;
-    const debouncedSearch = () => {
+    const onSearchQueryChange = (value: string) => {
+      searchQuery.value = value;
       if (searchTimeout) clearTimeout(searchTimeout);
       searchTimeout = window.setTimeout(() => {
         applyFilters();
@@ -445,13 +385,11 @@ export default defineComponent({
       try {
         const session = await store.dispatch('sessions/createSession', {
           title: newSession.title,
-          date_start: newSession.date_start || undefined,
-          date_end: newSession.date_end || undefined,
+          date_start: newSession.date_start ? newSession.date_start.toISOString() : undefined,
         });
         showCreateDialog.value = false;
         newSession.title = '';
-        newSession.date_start = '';
-        newSession.date_end = '';
+        newSession.date_start = null;
         showMessage('Session created successfully');
         
         // Navigate to the new session
@@ -498,6 +436,7 @@ export default defineComponent({
     // Lifecycle
     onMounted(() => {
       store.dispatch('sessions/fetchSessions');
+      store.dispatch('contacts/fetchContacts');
     });
 
     return {
@@ -510,16 +449,16 @@ export default defineComponent({
       creating,
       deleting,
       searchQuery,
-      dateStart,
-      dateEnd,
+      dateRange,
       statusFilter,
-      statusOptions,
+      participantFilter,
       newSession,
       snackbar,
 
       // Computed
       sessions,
       loading,
+      contacts,
 
       // Methods
       formatDate,
@@ -528,7 +467,7 @@ export default defineComponent({
       openSession,
       applyFilters,
       clearFilters,
-      debouncedSearch,
+      onSearchQueryChange,
       createSession,
       confirmDelete,
       deleteSession,
@@ -543,48 +482,6 @@ export default defineComponent({
   display: flex;
   min-height: calc(100vh - 64px);
   background: #f5f5f5;
-}
-
-/* Sidebar */
-.filters-sidebar {
-  width: 280px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
-  padding: 16px;
-  transition: width 0.3s ease;
-  flex-shrink: 0;
-}
-
-.filters-sidebar.collapsed {
-  width: 56px;
-  padding: 16px 8px;
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-
-.sidebar-header h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.filter-group {
-  margin-bottom: 16px;
-}
-
-.filter-label {
-  display: block;
-  font-size: 12px;
-  font-weight: 500;
-  color: #666;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 /* Main Content */
@@ -783,20 +680,6 @@ export default defineComponent({
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .filters-sidebar {
-    position: fixed;
-    left: 0;
-    top: 64px;
-    bottom: 0;
-    z-index: 100;
-    transform: translateX(-100%);
-  }
-
-  .filters-sidebar:not(.collapsed) {
-    transform: translateX(0);
-    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
-  }
-
   .table-header,
   .session-row {
     grid-template-columns: 100px 1fr 80px 60px 90px 40px;

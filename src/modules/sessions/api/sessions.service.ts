@@ -108,6 +108,7 @@ export interface SessionFilters {
   dateStart?: string;
   dateEnd?: string;
   status?: string;
+  participantId?: string;
   hasIdeas?: boolean;
   hasPosts?: boolean;
   sourceTypes?: string[];
@@ -116,7 +117,6 @@ export interface SessionFilters {
 export interface CreateSessionData {
   title: string;
   date_start?: string;
-  date_end?: string;
   participants?: string[];
 }
 
@@ -142,18 +142,27 @@ class SessionsService {
         queryParams += `&filters[work_status][$eq]=${filters.status}`;
       }
 
+      // Filter by session's date_start field within the selected date range
       if (filters?.dateStart) {
         queryParams += `&filters[date_start][$gte]=${filters.dateStart}`;
       }
 
       if (filters?.dateEnd) {
-        queryParams += `&filters[date_end][$lte]=${filters.dateEnd}`;
+        queryParams += `&filters[date_start][$lte]=${filters.dateEnd}`;
       }
 
       if (filters?.search) {
         queryParams += `&filters[$or][0][title][$containsi]=${encodeURIComponent(filters.search)}`;
         queryParams += `&filters[$or][1][summary][$containsi]=${encodeURIComponent(filters.search)}`;
       }
+
+      // Filter by participant (contact) - using Strapi v5 relation filtering
+      if (filters?.participantId) {
+        queryParams += `&filters[participants][documentId][$eq]=${filters.participantId}`;
+      }
+
+      console.log('[SessionsService] getSessions query:', queryParams);
+      console.log('[SessionsService] filters:', filters);
 
       const response = await httpService.get<SessionsResponse>(`/sessions?${queryParams}`);
       return response.data;
