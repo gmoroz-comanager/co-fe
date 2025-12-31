@@ -136,7 +136,7 @@ class SessionsService {
    */
   async getSessions(filters?: SessionFilters): Promise<SessionsResponse> {
     try {
-      let queryParams = 'populate[audio_sources][populate]=*&populate=ideas&populate=participants&sort=createdAt:desc';
+      let queryParams = 'populate[audio_sources][populate]=audio_file&populate[ideas]=true&populate[participants]=true&sort=createdAt:desc';
 
       if (filters?.status) {
         queryParams += `&filters[work_status][$eq]=${filters.status}`;
@@ -168,7 +168,8 @@ class SessionsService {
    */
   async getSession(documentId: string): Promise<SessionResponse> {
     try {
-      const queryParams = 'populate[audio_sources][populate]=audio_file&populate=ideas&populate=participants';
+      // Use object notation - use 'true' instead of '*' to avoid deep populate errors
+      const queryParams = 'populate[audio_sources][populate]=audio_file&populate[ideas]=true&populate[participants]=true';
       const response = await httpService.get<SessionResponse>(`/sessions/${documentId}?${queryParams}`);
       return response.data;
     } catch (error) {
