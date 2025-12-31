@@ -27,13 +27,14 @@ const getDefaultState = (): IdeasState => ({
   backgroundLoading: false,
   error: null,
   filters: {
-    sort: 'createdAt:desc',
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
     page: 1,
-    pageSize: 10
+    pageSize: 12
   },
   pagination: {
     page: 1,
-    pageSize: 10,
+    pageSize: 12,
     total: 0,
     pageCount: 0
   }
@@ -113,10 +114,8 @@ const ideasModule: Module<IdeasState, any> = {
         commit('SET_IDEAS', response.data);
         commit('SET_PAGINATION', response.meta.pagination);
         
-        // Get counts
-        const counts = await ideasService.countIdeas();
-        commit('SET_TOTAL_IDEAS', counts.total);
-        commit('SET_NEW_IDEAS', counts.new);
+        // Use pagination total instead of separate count requests
+        commit('SET_TOTAL_IDEAS', response.meta.pagination.total);
         
         return response;
       } catch (error: any) {
@@ -186,9 +185,10 @@ const ideasModule: Module<IdeasState, any> = {
     
     resetFilters({ commit, dispatch }) {
       commit('SET_FILTERS', {
-        sort: 'createdAt:desc',
+        sortBy: 'createdAt',
+        sortOrder: 'desc',
         page: 1,
-        pageSize: 10
+        pageSize: 12
       });
       return dispatch('fetchIdeas');
     }

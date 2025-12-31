@@ -7,12 +7,14 @@
       :date-range="dateRange"
       :status-filter="statusFilter"
       :participant-filter="participantFilter"
+      :sort-order="sortOrder"
       :contacts="contacts"
       @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
       @update:search-query="onFilterChange('search', $event)"
       @update:date-range="onFilterChange('dateRange', $event)"
       @update:status-filter="onFilterChange('status', $event)"
       @update:participant-filter="onFilterChange('participant', $event)"
+      @update:sort-order="onFilterChange('sortOrder', $event)"
       @clear-filters="clearFilters"
     />
 
@@ -365,7 +367,11 @@ export default defineComponent({
       let dateStart: string | undefined;
       let dateEnd: string | undefined;
 
-      if (dateRange.value.length >= 2) {
+      if (dateRange.value.length === 1) {
+        // Single date selected - use same date for start and end
+        dateStart = dateRange.value[0].toISOString().split('T')[0];
+        dateEnd = dateStart;
+      } else if (dateRange.value.length >= 2) {
         // Sort dates to ensure start is before end
         const sortedDates = [...dateRange.value].sort((a, b) => a.getTime() - b.getTime());
         dateStart = sortedDates[0].toISOString().split('T')[0];
@@ -408,6 +414,9 @@ export default defineComponent({
           break;
         case 'participant':
           participantFilter.value = value;
+          break;
+        case 'sortOrder':
+          sortOrder.value = value;
           break;
       }
       

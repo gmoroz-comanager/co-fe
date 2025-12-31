@@ -1,167 +1,76 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <h1 class="text-h3 mb-6">Ideas Catalog</h1>
-      </v-col>
-    </v-row>
+  <div class="ideas-page">
+    <!-- Sidebar Filters -->
+    <IdeasFilterSidebar
+      :is-collapsed="sidebarCollapsed"
+      :search-query="searchQuery"
+      :date-range="dateRange"
+      :status-filter="statusFilter"
+      :sort-order="sortOrder"
+      @toggle-collapse="sidebarCollapsed = !sidebarCollapsed"
+      @update:search-query="onFilterChange('search', $event)"
+      @update:date-range="onFilterChange('dateRange', $event)"
+      @update:status-filter="onFilterChange('status', $event)"
+      @update:sort-order="onFilterChange('sortOrder', $event)"
+      @clear-filters="clearFilters"
+    />
 
-    <!-- Filters Section -->
-    <v-row>
-      <v-col cols="12">
-        <v-card class="mb-6" :loading="backgroundLoading">
-          <v-card-title>
-            Filters
-            <v-spacer></v-spacer>
-            <v-btn
-              color="primary"
-              variant="text"
-              @click="resetFilters"
-              :disabled="loading"
-            >
-              Reset Filters
-            </v-btn>
-          </v-card-title>
-          
-          <v-card-text>
-            <v-row>
-              <!-- Search Term -->
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="filters.searchTerm"
-                  label="Search"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  clearable
-                  @update:model-value="debouncedSearch"
-                  prepend-inner-icon="mdi-magnify"
-                ></v-text-field>
-              </v-col>
-              
-              <!-- Status Filter -->
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="filters.workStatus"
-                  :items="statusOptions"
-                  label="Status"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  clearable
-                  @update:model-value="applyFilters"
-                ></v-select>
-              </v-col>
-              
-              <!-- Sort Order -->
-              <v-col cols="12" md="4">
-                <v-select
-                  v-model="filters.sort"
-                  :items="sortOptions"
-                  label="Sort By"
-                  variant="outlined"
-                  density="compact"
-                  hide-details
-                  @update:model-value="applyFilters"
-                ></v-select>
-              </v-col>
-            </v-row>
-            
-            <v-row class="mt-4">
-              <!-- Date Range -->
-              <v-col cols="12" md="6">
-                <v-menu
-                  v-model="startDateMenu"
-                  :close-on-content-click="false"
-                >
-                  <template v-slot:activator="{ props }">
-                    <v-text-field
-                      v-model="startDateFormatted"
-                      label="From Date"
-                      prepend-inner-icon="mdi-calendar"
-                      readonly
-                      v-bind="props"
-                      variant="outlined"
-                      density="compact"
-                      hide-details
-                      clearable
-                      @click:clear="clearStartDate"
-                    ></v-text-field>
-                  </template>
-                  <v-date-picker
-                    v-model="startDate"
-                    @update:model-value="startDateMenu = false; updateStartDate()"
-                  ></v-date-picker>
-                </v-menu>
-              </v-col>
-              
-              <v-col cols="12" md="6">
-                <v-menu
-                  v-model="endDateMenu"
-                  :close-on-content-click="false"
-                >
-                  <template v-slot:activator="{ props }">
-                    <v-text-field
-                      v-model="endDateFormatted"
-                      label="To Date"
-                      prepend-inner-icon="mdi-calendar"
-                      readonly
-                      v-bind="props"
-                      variant="outlined"
-                      density="compact"
-                      hide-details
-                      clearable
-                      @click:clear="clearEndDate"
-                    ></v-text-field>
-                  </template>
-                  <v-date-picker
-                    v-model="endDate"
-                    @update:model-value="endDateMenu = false; updateEndDate()"
-                  ></v-date-picker>
-                </v-menu>
-              </v-col>
-            </v-row>
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
+    <!-- Main Content -->
+    <main class="ideas-content">
+      <!-- Header -->
+      <div class="ideas-header">
+        <h1>Ideas Catalog</h1>
+        <div class="header-info">
+          <v-chip v-if="pagination.total > 0" variant="tonal" size="small">
+            {{ pagination.total }} ideas
+          </v-chip>
+        </div>
+      </div>
 
-    <!-- Error State -->
-    <v-row v-if="error">
-      <v-col cols="12">
-        <v-alert type="error" closable @click:close="clearError">{{ error }}</v-alert>
-      </v-col>
-    </v-row>
-
-    <!-- Loading State -->
-    <v-row v-if="loading">
-      <v-col cols="12" class="text-center">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-      </v-col>
-    </v-row>
-
-    <!-- Empty State -->
-    <v-row v-else-if="ideas.length === 0">
-      <v-col cols="12" class="text-center">
-        <v-alert type="info" variant="tonal">
-          No ideas found matching your criteria.
-        </v-alert>
-      </v-col>
-    </v-row>
-
-    <!-- Ideas List -->
-    <v-row v-else>
-      <v-col
-        v-for="idea in ideas"
-        :key="idea.id"
-        cols="12"
-        md="6"
-        lg="4"
+      <!-- Error State -->
+      <v-alert 
+        v-if="error" 
+        type="error" 
+        closable 
+        class="mb-4"
+        @click:close="clearError"
       >
+        {{ error }}
+      </v-alert>
+
+      <!-- Loading State -->
+      <v-progress-linear
+        v-if="loading"
+        indeterminate
+        color="primary"
+        class="mb-4"
+      />
+
+      <!-- Background Loading Indicator -->
+      <v-progress-linear
+        v-else-if="backgroundLoading"
+        indeterminate
+        color="primary"
+        height="2"
+        class="mb-4"
+      />
+
+      <!-- Empty State -->
+      <div v-if="!loading && ideas.length === 0" class="empty-state">
+        <v-icon size="64" color="grey-lighten-1">mdi-lightbulb-outline</v-icon>
+        <p>No ideas found matching your criteria.</p>
+        <v-btn color="primary" variant="text" @click="clearFilters">
+          Clear Filters
+        </v-btn>
+      </div>
+
+      <!-- Ideas Grid -->
+      <div v-else class="ideas-grid">
         <v-card
+          v-for="idea in ideas"
+          :key="idea.id"
           :to="{ name: 'IdeaDetail', params: { id: idea.documentId || idea.id } }"
-          height="100%"
-          class="d-flex flex-column"
+          class="idea-card"
           hover
         >
           <v-card-title class="d-flex align-center">
@@ -237,153 +146,144 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-      </v-col>
-    </v-row>
+      </div>
 
-    <!-- Pagination -->
-    <v-row v-if="ideas.length > 0">
-      <v-col cols="12" class="d-flex justify-center mt-4">
+      <!-- Pagination -->
+      <div v-if="pagination.pageCount > 1" class="pagination-container">
         <v-pagination
-          v-model="currentPage"
+          :model-value="pagination.page"
           :length="pagination.pageCount"
           :total-visible="7"
-          @update:model-value="changePage"
-        ></v-pagination>
-      </v-col>
-    </v-row>
-  </v-container>
+          rounded="circle"
+          @update:model-value="onPageChange"
+        />
+        <span class="pagination-info">
+          {{ pagination.total }} ideas total
+        </span>
+      </div>
+    </main>
+  </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineComponent, ref, computed, onMounted } from 'vue';
 import { useStore } from 'vuex';
-import { IdeaFilters } from '../api/ideas.service';
 import { debounce } from 'lodash';
 import { formatDate } from '@/core/helpers/dateFormat';
+import IdeasFilterSidebar from './components/IdeasFilterSidebar.vue';
 
 export default defineComponent({
   name: 'IdeasList',
-  
+
+  components: {
+    IdeasFilterSidebar,
+  },
+
   setup() {
     const store = useStore();
-    
-    // State
-    const startDate = ref<string | null>(null);
-    const endDate = ref<string | null>(null);
-    const startDateMenu = ref(false);
-    const endDateMenu = ref(false);
-    const startDateFormatted = ref('');
-    const endDateFormatted = ref('');
-    const currentPage = ref(1);
-    
-    // Computed
+
+    // Sidebar state
+    const sidebarCollapsed = ref(false);
+
+    // Filter state (local for immediate UI updates)
+    const searchQuery = ref('');
+    const dateRange = ref<Date[]>([]);
+    const statusFilter = ref('');
+    const sortOrder = ref<'asc' | 'desc'>('desc');
+
+    // Computed from store
     const ideas = computed(() => store.getters['ideas/allIdeas']);
     const loading = computed(() => store.getters['ideas/isLoading']);
     const backgroundLoading = computed(() => store.getters['ideas/isBackgroundLoading']);
     const error = computed(() => store.state.ideas.error);
-    const filters = computed(() => store.getters['ideas/filters']);
     const pagination = computed(() => store.getters['ideas/pagination']);
-    
-    // Options for select fields
-    const statusOptions = [
-      { title: 'New', value: 'new' },
-      { title: 'Ready to Publish', value: 'readyToPublish' },
-      { title: 'Published', value: 'published' }
-    ];
-    
-    const sortOptions = [
-      { title: 'Newest First', value: 'createdAt:desc' },
-      { title: 'Oldest First', value: 'createdAt:asc' },
-      { title: 'Title (A-Z)', value: 'title:asc' },
-      { title: 'Title (Z-A)', value: 'title:desc' }
-    ];
-    
-    // Methods
-    const fetchIdeas = () => {
-      store.dispatch('ideas/fetchIdeas');
+
+    // Debounced filter application
+    let filterTimeout: number | null = null;
+    const DEBOUNCE_DELAY = 500;
+
+    const applyFilters = async () => {
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+
+      if (dateRange.value.length === 1) {
+        // Single date selected - use same date for start and end
+        startDate = dateRange.value[0].toISOString().split('T')[0];
+        endDate = startDate;
+      } else if (dateRange.value.length >= 2) {
+        const sortedDates = [...dateRange.value].sort((a, b) => a.getTime() - b.getTime());
+        startDate = sortedDates[0].toISOString().split('T')[0];
+        endDate = sortedDates[sortedDates.length - 1].toISOString().split('T')[0];
+      }
+
+      const filtersPayload = {
+        searchTerm: searchQuery.value || undefined,
+        startDate,
+        endDate,
+        workStatus: statusFilter.value || undefined,
+        sortBy: 'createdAt' as const,
+        sortOrder: sortOrder.value,
+        page: 1,
+        pageSize: 12,
+      };
+      
+      console.log('[IdeasList] applyFilters:', filtersPayload);
+      await store.dispatch('ideas/updateFilters', filtersPayload);
     };
-    
-    const applyFilters = () => {
-      currentPage.value = 1; // Reset to first page when filters change
-      store.dispatch('ideas/updateFilters', { 
-        ...filters.value,
-        page: 1
+
+    const debouncedApplyFilters = () => {
+      if (filterTimeout) clearTimeout(filterTimeout);
+      filterTimeout = window.setTimeout(() => {
+        applyFilters();
+      }, DEBOUNCE_DELAY);
+    };
+
+    // Universal handler for all filter changes
+    const onFilterChange = (filterType: string, value: any) => {
+      console.log(`[IdeasList] Filter changed: ${filterType} =`, value);
+
+      switch (filterType) {
+        case 'search':
+          searchQuery.value = value || '';
+          break;
+        case 'dateRange':
+          dateRange.value = value || [];
+          break;
+        case 'status':
+          statusFilter.value = value || '';
+          break;
+        case 'sortOrder':
+          sortOrder.value = value;
+          break;
+      }
+
+      debouncedApplyFilters();
+    };
+
+    // Pagination handler
+    const onPageChange = (page: number) => {
+      store.dispatch('ideas/updateFilters', {
+        ...store.getters['ideas/filters'],
+        page,
       });
     };
-    
-    const debouncedSearch = debounce(() => {
-      applyFilters();
-    }, 500);
+
+    const clearFilters = async () => {
+      if (filterTimeout) clearTimeout(filterTimeout);
+
+      searchQuery.value = '';
+      dateRange.value = [];
+      statusFilter.value = '';
+      sortOrder.value = 'desc';
+
+      await store.dispatch('ideas/resetFilters');
+    };
 
     const clearError = () => {
       store.commit('ideas/SET_ERROR', null);
     };
-    
-    const resetFilters = () => {
-      startDate.value = null;
-      endDate.value = null;
-      startDateFormatted.value = '';
-      endDateFormatted.value = '';
-      currentPage.value = 1;
-      store.dispatch('ideas/resetFilters');
-    };
-    
-    const changePage = (page: number) => {
-      store.dispatch('ideas/updateFilters', { 
-        ...filters.value,
-        page
-      });
-    };
-    
-    const updateStartDate = () => {
-      if (startDate.value) {
-        startDateFormatted.value = formatDateYMD(startDate.value);
-        store.dispatch('ideas/updateFilters', { 
-          ...filters.value,
-          startDate: startDate.value 
-        });
-      }
-    };
-    
-    const updateEndDate = () => {
-      if (endDate.value) {
-        endDateFormatted.value = formatDateYMD(endDate.value);
-        store.dispatch('ideas/updateFilters', { 
-          ...filters.value,
-          endDate: endDate.value 
-        });
-      }
-    };
-    
-    const clearStartDate = () => {
-      startDate.value = null;
-      startDateFormatted.value = '';
-      store.dispatch('ideas/updateFilters', { 
-        ...filters.value,
-        startDate: undefined 
-      });
-    };
-    
-    const clearEndDate = () => {
-      endDate.value = null;
-      endDateFormatted.value = '';
-      store.dispatch('ideas/updateFilters', { 
-        ...filters.value,
-        endDate: undefined 
-      });
-    };
-    
-    // formatDate is imported from @/core/helpers/dateFormat
-    
-    const formatDateYMD = (dateString: string) => {
-      const date = new Date(dateString);
-      return new Intl.DateTimeFormat('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }).format(date);
-    };
-    
+
+    // Helper methods
     const getStatusColor = (status: string | undefined) => {
       switch (status) {
         case 'new': return 'red';
@@ -392,7 +292,7 @@ export default defineComponent({
         default: return 'grey';
       }
     };
-    
+
     const parseTags = (tagsString: string | undefined) => {
       if (!tagsString) return [];
       return tagsString.split(',').map(tag => tag.trim());
@@ -403,64 +303,141 @@ export default defineComponent({
       if (text.length <= maxLength) return text;
       return text.substring(0, maxLength) + '...';
     };
-    
-    // Watch for page changes from pagination component
-    watch(currentPage, (newPage) => {
-      if (newPage !== filters.value.page) {
-        changePage(newPage);
-      }
-    });
-    
-    // Watch for page changes from store
-    watch(() => pagination.value.page, (newPage) => {
-      currentPage.value = newPage;
-    });
-    
+
     // Fetch ideas on component mount
     onMounted(() => {
-      fetchIdeas();
+      store.dispatch('ideas/fetchIdeas');
     });
-    
+
     return {
+      // State
+      sidebarCollapsed,
+      searchQuery,
+      dateRange,
+      statusFilter,
+      sortOrder,
+
+      // Computed
       ideas,
       loading,
+      backgroundLoading,
       error,
-      filters,
       pagination,
-      statusOptions,
-      sortOptions,
-      startDate,
-      endDate,
-      startDateMenu,
-      endDateMenu,
-      startDateFormatted,
-      endDateFormatted,
-      currentPage,
-      fetchIdeas,
-      applyFilters,
-      debouncedSearch,
-      resetFilters,
-      changePage,
-      updateStartDate,
-      updateEndDate,
-      clearStartDate,
-      clearEndDate,
+
+      // Methods
+      onFilterChange,
+      onPageChange,
+      clearFilters,
       clearError,
       formatDate,
       getStatusColor,
       parseTags,
       truncateText,
-      backgroundLoading
     };
-  }
+  },
 });
 </script>
 
 <style scoped>
+.ideas-page {
+  display: flex;
+  min-height: calc(100vh - 64px);
+  background: #f5f5f5;
+}
+
+/* Main Content */
+.ideas-content {
+  flex: 1;
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.ideas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.ideas-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Ideas Grid */
+.ideas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.idea-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.idea-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 .text-truncate {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 64px 24px;
+  text-align: center;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.empty-state p {
+  margin: 16px 0 24px;
+  font-size: 16px;
+}
+
+/* Pagination */
+.pagination-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0;
+  margin-top: 24px;
+}
+
+.pagination-info {
+  color: #666;
+  font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .ideas-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .ideas-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

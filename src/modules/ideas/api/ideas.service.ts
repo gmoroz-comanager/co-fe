@@ -66,7 +66,8 @@ export interface IdeaFilters {
   searchTerm?: string;
   page?: number;
   pageSize?: number;
-  sort?: string;
+  sortBy?: 'createdAt' | 'title' | 'updatedAt';
+  sortOrder?: 'asc' | 'desc';
 }
 
 /**
@@ -93,11 +94,9 @@ class IdeasService {
     }
     
     // Add sorting
-    if (filters.sort) {
-      queryParams.append('sort', filters.sort);
-    } else {
-      queryParams.append('sort', 'createdAt:desc');
-    }
+    const sortBy = filters.sortBy || 'createdAt';
+    const sortOrder = filters.sortOrder || 'desc';
+    queryParams.append('sort', `${sortBy}:${sortOrder}`);
     
     // Add filters
     if (filters.workStatus) {
@@ -109,11 +108,13 @@ class IdeasService {
     }
     
     if (filters.startDate) {
-      queryParams.append('filters[createdAt][$gte]', filters.startDate);
+      // Start of day
+      queryParams.append('filters[createdAt][$gte]', `${filters.startDate}T00:00:00.000Z`);
     }
     
     if (filters.endDate) {
-      queryParams.append('filters[createdAt][$lte]', filters.endDate);
+      // End of day
+      queryParams.append('filters[createdAt][$lte]', `${filters.endDate}T23:59:59.999Z`);
     }
     
     if (filters.searchTerm) {

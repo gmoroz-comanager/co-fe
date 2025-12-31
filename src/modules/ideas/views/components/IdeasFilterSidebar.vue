@@ -17,7 +17,7 @@
       <div class="filter-group">
         <v-text-field
           :model-value="searchQuery"
-          label="Search sessions..."
+          label="Search ideas..."
           prepend-inner-icon="mdi-magnify"
           variant="outlined"
           density="compact"
@@ -59,21 +59,6 @@
         />
       </div>
 
-      <!-- Participant Filter -->
-      <div class="filter-group">
-        <label class="filter-label">Participant</label>
-        <v-select
-          :model-value="participantFilter"
-          :items="participantOptions"
-          item-title="title"
-          item-value="value"
-          variant="outlined"
-          density="compact"
-          hide-details
-          @update:model-value="$emit('update:participantFilter', $event)"
-        />
-      </div>
-
       <!-- Sort Order -->
       <div class="filter-group">
         <label class="filter-label">Sort Order</label>
@@ -109,16 +94,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref, computed } from 'vue';
-
-interface Contact {
-  id: number;
-  documentId: string;
-  name: string;
-}
+import { defineComponent, PropType, ref } from 'vue';
 
 export default defineComponent({
-  name: 'SessionsFilterSidebar',
+  name: 'IdeasFilterSidebar',
 
   props: {
     isCollapsed: {
@@ -137,17 +116,9 @@ export default defineComponent({
       type: String,
       default: '',
     },
-    participantFilter: {
-      type: String,
-      default: '',
-    },
     sortOrder: {
       type: String as PropType<'asc' | 'desc'>,
       default: 'desc',
-    },
-    contacts: {
-      type: Array as PropType<Contact[]>,
-      default: () => [],
     },
   },
 
@@ -156,31 +127,19 @@ export default defineComponent({
     'update:searchQuery',
     'update:dateRange',
     'update:statusFilter',
-    'update:participantFilter',
     'update:sortOrder',
     'clear-filters',
   ],
 
-  setup(props, { emit }) {
+  setup(_, { emit }) {
     const dateMenuOpen = ref(false);
 
     const statusOptions = [
       { title: 'Any', value: '' },
-      { title: 'Draft', value: 'draft' },
-      { title: 'Processing', value: 'processing' },
-      { title: 'Ready', value: 'ready' },
-      { title: 'Error', value: 'error' },
+      { title: 'New', value: 'new' },
+      { title: 'Ready to Publish', value: 'readyToPublish' },
+      { title: 'Published', value: 'published' },
     ];
-
-    // Build participant options with "Any" as the first option
-    const participantOptions = computed(() => {
-      const anyOption = { title: 'Any', value: '' };
-      const contactOptions = props.contacts.map(contact => ({
-        title: contact.name,
-        value: contact.documentId,
-      }));
-      return [anyOption, ...contactOptions];
-    });
 
     const handleDateRangeChange = (value: Date[] | null) => {
       emit('update:dateRange', value || []);
@@ -194,7 +153,6 @@ export default defineComponent({
     return {
       dateMenuOpen,
       statusOptions,
-      participantOptions,
       handleDateRangeChange,
     };
   },

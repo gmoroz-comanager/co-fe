@@ -150,11 +150,13 @@ class SessionsService {
 
       // Filter by session's date_start field within the selected date range
       if (filters?.dateStart) {
-        queryParams += `&filters[date_start][$gte]=${filters.dateStart}`;
+        // Start of day
+        queryParams += `&filters[date_start][$gte]=${filters.dateStart}T00:00:00.000Z`;
       }
 
       if (filters?.dateEnd) {
-        queryParams += `&filters[date_start][$lte]=${filters.dateEnd}`;
+        // End of day
+        queryParams += `&filters[date_start][$lte]=${filters.dateEnd}T23:59:59.999Z`;
       }
 
       if (filters?.search) {
