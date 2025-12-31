@@ -40,6 +40,13 @@ export interface Idea {
     name?: string;
     [key: string]: any;
   } | null;
+  session?: {
+    id: number;
+    documentId: string;
+    title?: string;
+    date_start?: string;
+    work_status?: string;
+  } | null;
 }
 
 export interface IdeasResponse {
@@ -175,6 +182,31 @@ class IdeasService {
       total: totalResponse.data.meta.pagination.total,
       new: newResponse.data.meta.pagination.total
     };
+  }
+
+  /**
+   * Count ideas by all statuses for dashboard
+   * Uses optimized single endpoint instead of multiple API calls
+   */
+  async countIdeasByStatus(): Promise<{
+    total: number;
+    new: number;
+    planned: number;
+    readyToPublish: number;
+    published: number;
+  }> {
+    interface StatusCountsResponse {
+      data: {
+        total: number;
+        new: number;
+        planned: number;
+        readyToPublish: number;
+        published: number;
+      };
+    }
+    
+    const response = await httpService.get<StatusCountsResponse>('/ideas/status-counts');
+    return response.data.data;
   }
 
   /**

@@ -1,5 +1,21 @@
 <template>
   <v-container>
+    <!-- Breadcrumbs -->
+    <v-breadcrumbs v-if="!loading && idea" :items="breadcrumbs" class="px-0 mb-2">
+      <template v-slot:divider>
+        <v-icon icon="mdi-chevron-right" size="small"></v-icon>
+      </template>
+      <template v-slot:item="{ item }">
+        <v-breadcrumbs-item
+          :to="item.to"
+          :disabled="item.disabled"
+        >
+          <v-icon v-if="item.icon" :icon="item.icon" size="small" class="mr-1"></v-icon>
+          {{ item.title }}
+        </v-breadcrumbs-item>
+      </template>
+    </v-breadcrumbs>
+
     <v-row v-if="loading">
       <v-col cols="12" class="text-center">
         <v-progress-circular indeterminate color="primary"></v-progress-circular>
@@ -295,22 +311,74 @@
   </v-container>
 </template>
 
-<script>
+<script lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
-import { ideasService } from '../api/ideas.service';
+import { ideasService, Idea } from '../api/ideas.service';
 import { postingService } from '../../posting/api/posting.service';
 import { formatDateTime } from '@/core/helpers/dateFormat';
+
+interface BreadcrumbItem {
+  title: string;
+  to?: string;
+  disabled?: boolean;
+  icon?: string;
+}
 
 export default {
   name: 'IdeaDetail',
   
   setup() {
     const route = useRoute();
-    const idea = ref(null);
+    const idea = ref<Idea | null>(null);
     const loading = ref(true);
-    const error = ref(null);
+    const error = ref<string | null>(null);
+    
+    // Computed breadcrumbs based on idea and session
+    const breadcrumbs = computed((): BreadcrumbItem[] => {
+      const items: BreadcrumbItem[] = [];
+      
+      // Always start with Home
+      items.push({
+        title: 'Home',
+        to: '/',
+        icon: 'mdi-home'
+      });
+      
+      // If idea has a session, show session path
+      if (idea.value?.session) {
+        items.push({
+          title: 'Sessions',
+          to: '/sessions'
+        });
+        
+        items.push({
+          title: idea.value.session.title || 'Session',
+          to: `/sessions/${idea.value.session.documentId}`
+        });
+        
+        // Ideas (context)
+        items.push({
+          title: 'Ideas',
+          disabled: true
+        });
+      } else {
+        // No session - show Ideas list
+        items.push({
+          title: 'Ideas',
+          to: '/ideas'
+        });
+      }
+      
+      // Current idea (disabled, current page)
+      items.push({
+        title: idea.value?.title || 'Idea',
+        disabled: true
+      });
+      
+      return items;
+    });
     
     // Feedback state
     const likeLoading = ref(false);
@@ -471,6 +539,7 @@ export default {
       idea,
       loading,
       error,
+      breadcrumbs,
       likeLoading,
       dislikeLoading,
       polishLoading,

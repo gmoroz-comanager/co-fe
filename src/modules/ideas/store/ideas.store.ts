@@ -1,11 +1,20 @@
 import { Module } from 'vuex';
 import { ideasService, Idea, IdeaFilters } from '../api/ideas.service';
 
+export interface IdeasStatusCounts {
+  total: number;
+  new: number;
+  planned: number;
+  readyToPublish: number;
+  published: number;
+}
+
 export interface IdeasState {
   ideas: Idea[];
   currentIdea: Idea | null;
   totalIdeas: number;
   newIdeas: number;
+  statusCounts: IdeasStatusCounts;
   loading: boolean;
   backgroundLoading: boolean;
   error: string | null;
@@ -23,6 +32,13 @@ const getDefaultState = (): IdeasState => ({
   currentIdea: null,
   totalIdeas: 0,
   newIdeas: 0,
+  statusCounts: {
+    total: 0,
+    new: 0,
+    planned: 0,
+    readyToPublish: 0,
+    published: 0
+  },
   loading: false,
   backgroundLoading: false,
   error: null,
@@ -48,9 +64,10 @@ const ideasModule: Module<IdeasState, any> = {
   getters: {
     allIdeas: (state): Idea[] => state.ideas,
     currentIdea: (state): Idea | null => state.currentIdea,
-    recentIdeas: (state): Idea[] => state.ideas.slice(0, 3),
+    recentIdeas: (state): Idea[] => state.ideas.slice(0, 5),
     totalIdeas: (state): number => state.totalIdeas,
     newIdeas: (state): number => state.newIdeas,
+    statusCounts: (state): IdeasStatusCounts => state.statusCounts,
     isLoading: (state): boolean => state.loading,
     isBackgroundLoading: (state): boolean => state.backgroundLoading,
     filters: (state): IdeaFilters => state.filters,
@@ -72,6 +89,10 @@ const ideasModule: Module<IdeasState, any> = {
     
     SET_NEW_IDEAS(state, count: number) {
       state.newIdeas = count;
+    },
+    
+    SET_STATUS_COUNTS(state, counts: IdeasStatusCounts) {
+      state.statusCounts = counts;
     },
     
     SET_LOADING(state, loading: boolean) {
@@ -191,6 +212,17 @@ const ideasModule: Module<IdeasState, any> = {
         pageSize: 12
       });
       return dispatch('fetchIdeas');
+    },
+    
+    async fetchStatusCounts({ commit }) {
+      try {
+        const counts = await ideasService.countIdeasByStatus();
+        commit('SET_STATUS_COUNTS', counts);
+        return counts;
+      } catch (error: any) {
+        console.error('Error fetching status counts:', error);
+        throw error;
+      }
     }
   }
 };
