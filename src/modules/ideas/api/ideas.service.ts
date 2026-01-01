@@ -235,6 +235,15 @@ class IdeasService {
     });
     return response.data;
   }
+
+  /**
+   * Generate an image from visual description using AI (DALL-E 3)
+   * The image is saved to Strapi media library and linked to the idea's postMedia field
+   */
+  async generateImage(id: string | number): Promise<IdeaResponse> {
+    const response = await httpService.post<IdeaResponse>(`/ideas/${id}/generate-image`);
+    return response.data;
+  }
 }
 
 // Create singleton instance

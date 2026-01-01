@@ -18,9 +18,15 @@
 
       <!-- Content -->
       <main class="idea-main">
-        <IdeaContent :idea="idea" />
+        <IdeaContent 
+          :idea="idea" 
+          :generating-image="generatingImage"
+          @generate-image="handleGenerateImage"
+        />
+      </main>
 
-        <!-- Actions -->
+      <!-- Sticky Actions Footer -->
+      <div class="sticky-actions-footer">
         <IdeaActions
           :like-loading="likeLoading"
           :dislike-loading="dislikeLoading"
@@ -32,7 +38,7 @@
           @polish="submitPolishRequest"
           @post="openPostDialog"
         />
-      </main>
+      </div>
 
       <!-- Telegram Post Dialog -->
       <TelegramPostDialog
@@ -98,6 +104,7 @@ export default {
     const likeLoading = ref(false);
     const dislikeLoading = ref(false);
     const polishLoading = ref(false);
+    const generatingImage = ref(false);
 
     // Snackbar state
     const snackbar = ref(false);
@@ -223,6 +230,28 @@ export default {
       }
     };
 
+    const handleGenerateImage = async () => {
+      generatingImage.value = true;
+      try {
+        const ideaId = getIdeaId();
+        const response = await ideasService.generateImage(ideaId);
+
+        if (response.data) {
+          idea.value = response.data;
+          showSnackbar('Image generated successfully!');
+        }
+      } catch (err: unknown) {
+        console.error('Error generating image:', err);
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to generate image',
+          'error'
+        );
+      } finally {
+        generatingImage.value = false;
+      }
+    };
+
     // Lifecycle
     onMounted(() => {
       fetchIdea();
@@ -236,6 +265,7 @@ export default {
       likeLoading,
       dislikeLoading,
       polishLoading,
+      generatingImage,
       snackbar,
       snackbarMessage,
       snackbarColor,
@@ -251,6 +281,7 @@ export default {
       submitPolishRequest,
       openPostDialog,
       postToTelegram,
+      handleGenerateImage,
     };
   },
 };
@@ -260,6 +291,7 @@ export default {
 .idea-detail-page {
   min-height: calc(100vh - 64px);
   background: #f5f5f5;
+  padding-bottom: 100px; /* Space for sticky footer */
 }
 
 /* Loading / Error States */
@@ -285,5 +317,22 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+/* Sticky Actions Footer */
+.sticky-actions-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(to top, rgba(255, 255, 255, 1) 80%, rgba(255, 255, 255, 0));
+  padding: 16px 24px 24px;
+}
+
+.sticky-actions-footer :deep(.idea-actions-card) {
+  max-width: 1000px;
+  margin: 0 auto;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 }
 </style>

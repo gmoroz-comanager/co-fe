@@ -47,14 +47,14 @@
       </div>
     </section>
 
-    <!-- Visual Description -->
-    <section v-if="idea.visualDescription" class="content-section">
-      <h3>Visual Description</h3>
-      <div class="highlight-card purple">
-        <v-icon color="purple" class="mr-2">mdi-image-outline</v-icon>
-        <span>{{ idea.visualDescription }}</span>
-      </div>
-    </section>
+    <!-- Visual Description with Image Generation -->
+    <VisualDescriptionCard
+      v-if="idea.visualDescription"
+      :visual-description="idea.visualDescription"
+      :post-media="idea.postMedia"
+      :generating="generatingImage"
+      @generate-image="$emit('generate-image')"
+    />
 
     <!-- Announcement Text -->
     <section v-if="idea.announcementText" class="content-section">
@@ -95,34 +95,33 @@
       </v-chip>
     </section>
 
-    <!-- Related Audio -->
-    <section v-if="idea.audio_source" class="content-section">
-      <h3>Related Audio</h3>
-      <v-btn
-        color="primary"
-        variant="outlined"
-        :to="'/audio'"
-        prepend-icon="mdi-headphones"
-      >
-        View Audio Source
-      </v-btn>
-    </section>
   </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
 import { Idea } from '../../api/ideas.service';
+import VisualDescriptionCard from './VisualDescriptionCard.vue';
 
 export default defineComponent({
   name: 'IdeaContent',
+
+  components: {
+    VisualDescriptionCard,
+  },
 
   props: {
     idea: {
       type: Object as PropType<Idea>,
       required: true,
     },
+    generatingImage: {
+      type: Boolean,
+      default: false,
+    },
   },
+
+  emits: ['generate-image'],
 
   setup() {
     const parseTags = (tagsString: string): string[] => {
