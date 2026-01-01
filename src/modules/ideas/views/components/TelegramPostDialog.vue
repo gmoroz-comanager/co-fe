@@ -5,7 +5,7 @@
       <v-card-text>
         <p class="mb-4">Select a channel to post this idea.</p>
         <v-select
-          v-model="selectedChannel"
+          :model-value="selectedChannel"
           :items="channels"
           item-title="title"
           item-value="documentId"

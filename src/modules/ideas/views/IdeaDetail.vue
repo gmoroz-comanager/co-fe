@@ -215,9 +215,6 @@ export default {
         showSnackbar('Posted to Telegram successfully!');
         postDialogOpen.value = false;
 
-        if (result.url) {
-          window.open(result.url, '_blank');
-        }
       } catch (err: unknown) {
         console.error('Error posting to Telegram:', err);
         const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
