@@ -244,6 +244,37 @@ class IdeasService {
     const response = await httpService.post<IdeaResponse>(`/ideas/${id}/generate-image`);
     return response.data;
   }
+
+  /**
+   * Upload a custom image for an idea
+   * The image is uploaded to Strapi media library and linked to the idea's postMedia field
+   * @param numericId - MUST be the numeric id (not documentId) - Strapi upload API requires it
+   * @param documentId - The documentId for fetching the updated idea after upload
+   * @param file - The image file to upload
+   */
+  async uploadImage(numericId: number, documentId: string, file: File): Promise<IdeaResponse> {
+    const formData = new FormData();
+    formData.append('files', file);
+    formData.append('ref', 'api::idea.idea');
+    formData.append('refId', numericId.toString());
+    formData.append('field', 'postMedia');
+    
+    // Upload the file - Strapi will automatically link it to the idea
+    await httpService.upload<{ id: number; url: string }[]>('/upload', formData);
+    
+    // Get the updated idea using documentId (Strapi v5 API expects documentId)
+    return this.getIdea(documentId);
+  }
+
+  /**
+   * Remove the image from an idea
+   */
+  async removeImage(id: string | number): Promise<IdeaResponse> {
+    const response = await httpService.put<IdeaResponse>(`/ideas/${id}`, {
+      data: { postMedia: null }
+    });
+    return response.data;
+  }
 }
 
 // Create singleton instance

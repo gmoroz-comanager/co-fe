@@ -14,14 +14,23 @@
     <!-- Main Content -->
     <template v-else-if="idea">
       <!-- Header with Breadcrumbs -->
-      <IdeaHeader :idea="idea" />
+      <IdeaHeader 
+        :idea="idea"
+        :title-saving="titleSaving"
+        @update:title="handleTitleUpdate"
+      />
 
       <!-- Content -->
       <main class="idea-main">
         <IdeaContent 
           :idea="idea" 
           :generating-image="generatingImage"
+          :uploading-image="uploadingImage"
+          :polished-saving="polishedSaving"
           @generate-image="handleGenerateImage"
+          @upload-image="handleUploadImage"
+          @remove-image="handleRemoveImage"
+          @update:polished-body="handlePolishedBodyUpdate"
         />
       </main>
 
@@ -105,6 +114,11 @@ export default {
     const dislikeLoading = ref(false);
     const polishLoading = ref(false);
     const generatingImage = ref(false);
+
+    // Edit state
+    const titleSaving = ref(false);
+    const polishedSaving = ref(false);
+    const uploadingImage = ref(false);
 
     // Snackbar state
     const snackbar = ref(false);
@@ -207,7 +221,7 @@ export default {
 
       publishing.value = true;
       try {
-        const result = await postingService.publishIdea(
+        await postingService.publishIdea(
           idea.value.documentId,
           selectedChannelId.value
         );
@@ -249,6 +263,103 @@ export default {
       }
     };
 
+    // New edit handlers
+    const handleTitleUpdate = async (newTitle: string) => {
+      if (!idea.value) return;
+      
+      titleSaving.value = true;
+      try {
+        const ideaId = getIdeaId();
+        const response = await ideasService.updateIdea(ideaId, { title: newTitle });
+        
+        if (response.data) {
+          idea.value = response.data;
+          showSnackbar('Title updated successfully!');
+        }
+      } catch (err: unknown) {
+        console.error('Error updating title:', err);
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to update title',
+          'error'
+        );
+      } finally {
+        titleSaving.value = false;
+      }
+    };
+
+    const handlePolishedBodyUpdate = async (newContent: string) => {
+      if (!idea.value) return;
+      
+      polishedSaving.value = true;
+      try {
+        const ideaId = getIdeaId();
+        const response = await ideasService.updateIdea(ideaId, { polishedBody: newContent });
+        
+        if (response.data) {
+          idea.value = response.data;
+          showSnackbar('Polished content updated successfully!');
+        }
+      } catch (err: unknown) {
+        console.error('Error updating polished content:', err);
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to update polished content',
+          'error'
+        );
+      } finally {
+        polishedSaving.value = false;
+      }
+    };
+
+    const handleUploadImage = async (file: File) => {
+      if (!idea.value) return;
+      
+      uploadingImage.value = true;
+      try {
+        // Upload API requires numeric id, but getIdea needs documentId
+        const response = await ideasService.uploadImage(idea.value.id, idea.value.documentId, file);
+        
+        if (response.data) {
+          idea.value = response.data;
+          showSnackbar('Image uploaded successfully!');
+        }
+      } catch (err: unknown) {
+        console.error('Error uploading image:', err);
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to upload image',
+          'error'
+        );
+      } finally {
+        uploadingImage.value = false;
+      }
+    };
+
+    const handleRemoveImage = async () => {
+      if (!idea.value) return;
+      
+      uploadingImage.value = true;
+      try {
+        const ideaId = getIdeaId();
+        const response = await ideasService.removeImage(ideaId);
+        
+        if (response.data) {
+          idea.value = response.data;
+          showSnackbar('Image removed successfully!');
+        }
+      } catch (err: unknown) {
+        console.error('Error removing image:', err);
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to remove image',
+          'error'
+        );
+      } finally {
+        uploadingImage.value = false;
+      }
+    };
+
     // Lifecycle
     onMounted(() => {
       fetchIdea();
@@ -263,6 +374,9 @@ export default {
       dislikeLoading,
       polishLoading,
       generatingImage,
+      titleSaving,
+      polishedSaving,
+      uploadingImage,
       snackbar,
       snackbarMessage,
       snackbarColor,
@@ -279,6 +393,10 @@ export default {
       openPostDialog,
       postToTelegram,
       handleGenerateImage,
+      handleTitleUpdate,
+      handlePolishedBodyUpdate,
+      handleUploadImage,
+      handleRemoveImage,
     };
   },
 };

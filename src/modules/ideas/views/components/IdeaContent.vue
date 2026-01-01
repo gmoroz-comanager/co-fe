@@ -53,7 +53,10 @@
       :visual-description="idea.visualDescription"
       :post-media="idea.postMedia"
       :generating="generatingImage"
+      :uploading="uploadingImage"
       @generate-image="$emit('generate-image')"
+      @upload-image="$emit('upload-image', $event)"
+      @remove-image="$emit('remove-image')"
     />
 
     <!-- Announcement Text -->
@@ -65,12 +68,32 @@
       </div>
     </section>
 
-    <!-- Polished Content -->
-    <section v-if="idea.polishedBody" class="content-section">
-      <h3>Polished Content</h3>
-      <div class="polished-card">
-        <p class="content-text pre-wrap">{{ idea.polishedBody }}</p>
+    <!-- Polished Content (Editable) -->
+    <section v-if="idea.polishedBody || showPolishedEditor" class="content-section polished-section">
+      <div class="section-header">
+        <h3>Polished Content</h3>
+        <v-chip v-if="idea.polishedBody" color="success" size="small" variant="tonal">
+          <v-icon start size="small">mdi-check</v-icon>
+          Ready to publish
+        </v-chip>
       </div>
+      <EditableText
+        :model-value="idea.polishedBody || ''"
+        display-tag="div"
+        display-class="polished-text"
+        label="Polished Content"
+        placeholder="Enter polished content for publishing..."
+        :multiline="true"
+        :rows="6"
+        :saving="polishedSaving"
+        @save="onPolishedSave"
+      >
+        <template #display>
+          <div class="polished-card">
+            <p class="content-text pre-wrap">{{ idea.polishedBody }}</p>
+          </div>
+        </template>
+      </EditableText>
     </section>
 
     <!-- Tags -->
@@ -99,15 +122,17 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, PropType, computed } from 'vue';
 import { Idea } from '../../api/ideas.service';
 import VisualDescriptionCard from './VisualDescriptionCard.vue';
+import EditableText from './EditableText.vue';
 
 export default defineComponent({
   name: 'IdeaContent',
 
   components: {
     VisualDescriptionCard,
+    EditableText,
   },
 
   props: {
@@ -119,18 +144,37 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    uploadingImage: {
+      type: Boolean,
+      default: false,
+    },
+    polishedSaving: {
+      type: Boolean,
+      default: false,
+    },
   },
 
-  emits: ['generate-image'],
+  emits: ['generate-image', 'upload-image', 'remove-image', 'update:polished-body'],
 
-  setup() {
+  setup(props, { emit }) {
     const parseTags = (tagsString: string): string[] => {
       if (!tagsString) return [];
       return tagsString.split(',').map((tag: string) => tag.trim());
     };
 
+    const showPolishedEditor = computed(() => {
+      // Show editor even if no polished content yet, so user can add it
+      return !props.idea.polishedBody && props.idea.draftText;
+    });
+
+    const onPolishedSave = (newContent: string) => {
+      emit('update:polished-body', newContent);
+    };
+
     return {
       parseTags,
+      showPolishedEditor,
+      onPolishedSave,
     };
   },
 });
@@ -150,11 +194,24 @@ export default defineComponent({
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .content-section h3 {
   margin: 0 0 16px;
   font-size: 16px;
   font-weight: 600;
   color: #333;
+}
+
+.section-header h3 {
+  margin-bottom: 0;
 }
 
 .content-text {
@@ -229,6 +286,14 @@ export default defineComponent({
   border-radius: 8px;
   padding: 16px;
   border: 1px solid #a5d6a7;
+  flex: 1;
+}
+
+.polished-section :deep(.view-mode) {
+  width: 100%;
+}
+
+.polished-section :deep(.polished-card) {
+  width: 100%;
 }
 </style>
-

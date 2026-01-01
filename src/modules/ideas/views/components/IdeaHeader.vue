@@ -7,15 +7,27 @@
     <div class="header-card">
       <div class="header-main">
         <div class="header-info">
-          <h1>{{ idea.title }}</h1>
+          <EditableText
+            :model-value="idea.title"
+            display-tag="h1"
+            display-class="idea-title"
+            label="Title"
+            placeholder="Enter idea title..."
+            :saving="titleSaving"
+            @save="onTitleSave"
+          >
+            <template #display>
+              <h1 class="idea-title">{{ idea.title }}</h1>
+            </template>
+          </EditableText>
           <div class="header-meta">
             <v-chip
-              :color="getStatusColor(idea.work_status)"
+              :color="getStatusColor(idea.work_status || 'new')"
               size="small"
               label
               class="mr-2"
             >
-              {{ idea.work_status }}
+              {{ idea.work_status || 'new' }}
             </v-chip>
             <span class="text-caption text-grey">
               Created: {{ formatDate(idea.createdAt) }}
@@ -45,12 +57,14 @@ import { PageBreadcrumbs } from '@/core/components';
 import type { BreadcrumbItem } from '@/core/components/types';
 import { formatDateTime } from '@/core/helpers/dateFormat';
 import { Idea } from '../../api/ideas.service';
+import EditableText from './EditableText.vue';
 
 export default defineComponent({
   name: 'IdeaHeader',
 
   components: {
     PageBreadcrumbs,
+    EditableText,
   },
 
   props: {
@@ -58,9 +72,15 @@ export default defineComponent({
       type: Object as PropType<Idea>,
       required: true,
     },
+    titleSaving: {
+      type: Boolean,
+      default: false,
+    },
   },
 
-  setup(props) {
+  emits: ['update:title'],
+
+  setup(props, { emit }) {
     const router = useRouter();
 
     const breadcrumbs = computed((): BreadcrumbItem[] => {
@@ -127,11 +147,16 @@ export default defineComponent({
       }
     };
 
+    const onTitleSave = (newTitle: string) => {
+      emit('update:title', newTitle);
+    };
+
     return {
       breadcrumbs,
       formatDate,
       getStatusColor,
       goBack,
+      onTitleSave,
     };
   },
 });
@@ -156,10 +181,16 @@ export default defineComponent({
   margin: 0 auto;
 }
 
-.header-info h1 {
+.header-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-info :deep(.idea-title) {
   margin: 0 0 12px;
   font-size: 24px;
   font-weight: 700;
+  word-break: break-word;
 }
 
 .header-meta {
@@ -186,4 +217,3 @@ export default defineComponent({
   }
 }
 </style>
-

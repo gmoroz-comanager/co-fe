@@ -2,18 +2,39 @@
   <section class="visual-description-card">
     <div class="header-row">
       <h3>Visual Description</h3>
-      <v-btn
-        v-if="!postMedia"
-        color="deep-purple"
-        variant="elevated"
-        size="small"
-        prepend-icon="mdi-auto-fix"
-        :loading="generating"
-        @click="$emit('generate-image')"
-      >
-        Generate Image
-      </v-btn>
+      <div class="header-actions">
+        <v-btn
+          color="primary"
+          variant="outlined"
+          size="small"
+          prepend-icon="mdi-upload"
+          :loading="uploading"
+          @click="triggerFileInput"
+        >
+          Upload Image
+        </v-btn>
+        <v-btn
+          v-if="!postMedia"
+          color="deep-purple"
+          variant="elevated"
+          size="small"
+          prepend-icon="mdi-auto-fix"
+          :loading="generating"
+          @click="$emit('generate-image')"
+        >
+          Generate Image
+        </v-btn>
+      </div>
     </div>
+
+    <!-- Hidden File Input -->
+    <input
+      ref="fileInput"
+      type="file"
+      accept="image/*"
+      style="display: none"
+      @change="handleFileSelect"
+    />
 
     <!-- Visual Description Text -->
     <div class="description-content">
@@ -21,12 +42,12 @@
       <span class="description-text">{{ visualDescription }}</span>
     </div>
 
-    <!-- Generated Image Preview -->
+    <!-- Generated/Uploaded Image Preview -->
     <div v-if="postMedia" class="generated-image-container">
       <div class="image-wrapper">
         <img 
           :src="getMediaUrl(postMedia.url)" 
-          :alt="postMedia.name || 'Generated image'"
+          :alt="postMedia.name || 'Post image'"
           class="generated-image"
         />
         <div class="image-overlay">
@@ -42,6 +63,16 @@
           <v-btn
             icon
             size="small"
+            color="primary"
+            variant="flat"
+            :loading="uploading"
+            @click="triggerFileInput"
+          >
+            <v-icon>mdi-upload</v-icon>
+          </v-btn>
+          <v-btn
+            icon
+            size="small"
             color="deep-purple"
             variant="flat"
             :loading="generating"
@@ -49,11 +80,21 @@
           >
             <v-icon>mdi-refresh</v-icon>
           </v-btn>
+          <v-btn
+            icon
+            size="small"
+            color="error"
+            variant="flat"
+            :disabled="generating || uploading"
+            @click="confirmRemoveImage"
+          >
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
         </div>
       </div>
       <div class="image-info">
         <v-icon size="small" color="success" class="mr-1">mdi-check-circle</v-icon>
-        <span class="text-caption text-grey-darken-1">Image generated</span>
+        <span class="text-caption text-grey-darken-1">Image attached</span>
       </div>
     </div>
 
@@ -61,7 +102,7 @@
     <v-dialog v-model="fullscreenDialog" max-width="1200">
       <v-card>
         <v-card-title class="d-flex justify-space-between align-center">
-          <span>Generated Image</span>
+          <span>Post Image</span>
           <v-btn icon variant="text" @click="fullscreenDialog = false">
             <v-icon>mdi-close</v-icon>
           </v-btn>
@@ -70,17 +111,32 @@
           <img 
             v-if="postMedia"
             :src="getMediaUrl(postMedia.url)" 
-            :alt="postMedia.name || 'Generated image'"
+            :alt="postMedia.name || 'Post image'"
             class="fullscreen-image"
           />
         </v-card-text>
       </v-card>
     </v-dialog>
+
+    <!-- Remove Confirmation Dialog -->
+    <ConfirmationDialog
+      v-model="showRemoveDialog"
+      title="Remove Image?"
+      message="Are you sure you want to remove this image? This action cannot be undone."
+      confirm-text="Remove"
+      cancel-text="Cancel"
+      confirm-color="error"
+      icon="mdi-delete-alert"
+      icon-color="error"
+      @confirm="handleRemoveImage"
+      @cancel="showRemoveDialog = false"
+    />
   </section>
 </template>
 
 <script lang="ts">
 import { defineComponent, PropType, ref } from 'vue';
+import { ConfirmationDialog } from '@/core/components';
 
 interface PostMedia {
   id: number;
@@ -92,6 +148,10 @@ interface PostMedia {
 
 export default defineComponent({
   name: 'VisualDescriptionCard',
+
+  components: {
+    ConfirmationDialog,
+  },
 
   props: {
     visualDescription: {
@@ -106,12 +166,18 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    uploading: {
+      type: Boolean,
+      default: false,
+    },
   },
 
-  emits: ['generate-image'],
+  emits: ['generate-image', 'upload-image', 'remove-image'],
 
-  setup() {
+  setup(_, { emit }) {
     const fullscreenDialog = ref(false);
+    const showRemoveDialog = ref(false);
+    const fileInput = ref<HTMLInputElement | null>(null);
 
     const getMediaUrl = (url: string): string => {
       // If URL is already absolute, return as is
@@ -127,10 +193,53 @@ export default defineComponent({
       fullscreenDialog.value = true;
     };
 
+    const triggerFileInput = () => {
+      fileInput.value?.click();
+    };
+
+    const handleFileSelect = (event: Event) => {
+      const target = event.target as HTMLInputElement;
+      const file = target.files?.[0];
+      
+      if (file) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please select an image file');
+          return;
+        }
+        
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert('Image size must be less than 10MB');
+          return;
+        }
+        
+        emit('upload-image', file);
+      }
+      
+      // Reset input so same file can be selected again
+      target.value = '';
+    };
+
+    const confirmRemoveImage = () => {
+      showRemoveDialog.value = true;
+    };
+
+    const handleRemoveImage = () => {
+      showRemoveDialog.value = false;
+      emit('remove-image');
+    };
+
     return {
       fullscreenDialog,
+      showRemoveDialog,
+      fileInput,
       getMediaUrl,
       openFullscreen,
+      triggerFileInput,
+      handleFileSelect,
+      confirmRemoveImage,
+      handleRemoveImage,
     };
   },
 });
@@ -149,6 +258,8 @@ export default defineComponent({
   justify-content: space-between;
   align-items: center;
   margin-bottom: 16px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .header-row h3 {
@@ -156,6 +267,12 @@ export default defineComponent({
   font-size: 16px;
   font-weight: 600;
   color: #333;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .description-content {
@@ -224,4 +341,3 @@ export default defineComponent({
   object-fit: contain;
 }
 </style>
-
