@@ -1,27 +1,7 @@
 <template>
   <div class="audio-source-detail-page">
     <!-- Breadcrumbs -->
-    <nav class="breadcrumbs">
-      <v-btn
-        variant="text"
-        size="small"
-        prepend-icon="mdi-home"
-        @click="$router.push({ name: 'SessionsList' })"
-      >
-        Sessions
-      </v-btn>
-      <v-icon size="small" class="mx-1">mdi-chevron-right</v-icon>
-      <v-btn
-        variant="text"
-        size="small"
-        @click="goBackToSession"
-        :disabled="!sessionId"
-      >
-        {{ sessionTitle || 'Session' }}
-      </v-btn>
-      <v-icon size="small" class="mx-1">mdi-chevron-right</v-icon>
-      <span class="current-page">{{ audioSource?.title || 'Audio Source' }}</span>
-    </nav>
+    <PageBreadcrumbs :items="breadcrumbs" />
 
     <!-- Loading State -->
     <div v-if="loading" class="loading-state">
@@ -160,12 +140,15 @@ import { useRoute, useRouter } from 'vue-router';
 import { sessionsService, AudioSource } from '../api/sessions.service';
 import httpService from '@/core/api/http';
 import SpeakerMapper from '@/modules/audio/views/components/SpeakerMapper.vue';
+import { PageBreadcrumbs } from '@/core/components';
+import type { BreadcrumbItem } from '@/core/components/types';
 
 export default defineComponent({
   name: 'AudioSourceDetail',
 
   components: {
     SpeakerMapper,
+    PageBreadcrumbs,
   },
 
   setup() {
@@ -199,6 +182,31 @@ export default defineComponent({
         audioSource.value.transcript_structure?.length ||
         audioSource.value.transcription
       );
+    });
+
+    // Breadcrumbs
+    const breadcrumbs = computed((): BreadcrumbItem[] => {
+      const items: BreadcrumbItem[] = [];
+
+      items.push({
+        title: 'Sessions',
+        to: '/sessions',
+        icon: 'mdi-home',
+      });
+
+      if (sessionId.value) {
+        items.push({
+          title: sessionTitle.value || 'Session',
+          to: `/sessions/${sessionId.value}`,
+        });
+      }
+
+      items.push({
+        title: audioSource.value?.title || 'Audio Source',
+        disabled: true,
+      });
+
+      return items;
     });
 
     // Methods
@@ -338,6 +346,7 @@ export default defineComponent({
       // Computed
       audioFiles,
       hasTranscript,
+      breadcrumbs,
 
       // Methods
       getBaseUrl,
@@ -359,21 +368,6 @@ export default defineComponent({
 .audio-source-detail-page {
   min-height: calc(100vh - 64px);
   background: #f5f5f5;
-}
-
-/* Breadcrumbs */
-.breadcrumbs {
-  display: flex;
-  align-items: center;
-  padding: 12px 24px;
-  background: white;
-  border-bottom: 1px solid #e0e0e0;
-  font-size: 14px;
-}
-
-.current-page {
-  color: #666;
-  font-weight: 500;
 }
 
 /* Loading State */

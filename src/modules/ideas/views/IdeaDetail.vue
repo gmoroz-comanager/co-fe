@@ -1,314 +1,65 @@
 <template>
-  <v-container>
-    <!-- Breadcrumbs -->
-    <v-breadcrumbs v-if="!loading && idea" :items="breadcrumbs" class="px-0 mb-2">
-      <template v-slot:divider>
-        <v-icon icon="mdi-chevron-right" size="small"></v-icon>
-      </template>
-      <template v-slot:item="{ item }">
-        <v-breadcrumbs-item
-          :to="item.to"
-          :disabled="item.disabled"
-        >
-          <v-icon v-if="item.icon" :icon="item.icon" size="small" class="mr-1"></v-icon>
-          {{ item.title }}
-        </v-breadcrumbs-item>
-      </template>
-    </v-breadcrumbs>
+  <div class="idea-detail-page">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <v-progress-circular indeterminate color="primary" size="64" />
+      <p>Loading idea...</p>
+    </div>
 
-    <v-row v-if="loading">
-      <v-col cols="12" class="text-center">
-        <v-progress-circular indeterminate color="primary"></v-progress-circular>
-      </v-col>
-    </v-row>
-    
-    <div v-else-if="error">
+    <!-- Error State -->
+    <div v-else-if="error" class="error-state">
       <v-alert type="error">{{ error }}</v-alert>
     </div>
-    
-    <div v-else-if="idea">
-      <v-row>
-        <v-col cols="12">
-          <v-card>
-            <v-card-title class="text-h4">
-              {{ idea.title }}
-            </v-card-title>
-            
-            <v-card-subtitle>
-              <v-chip
-                :color="getStatusColor(idea.work_status)"
-                class="mr-2"
-                size="small"
-              >
-                {{ idea.work_status }}
-              </v-chip>
-              <span class="text-caption">
-                Created: {{ formatDate(idea.createdAt) }}
-              </span>
-            </v-card-subtitle>
-            
-            <v-card-text>
-              <!-- Alternative Titles -->
-              <div v-if="idea.alternativeTitles && idea.alternativeTitles.length > 0" class="mb-4">
-                <div class="text-h6 mb-2">Alternative Titles:</div>
-                <v-chip
-                  v-for="(title, index) in idea.alternativeTitles"
-                  :key="index"
-                  class="mr-2 mb-2"
-                  variant="outlined"
-                  color="primary"
-                >
-                  {{ title }}
-                </v-chip>
-              </div>
 
-              <!-- Brand Facet & Channel -->
-              <v-row v-if="idea.brandFacet || idea.recommendedChannel" class="mb-4">
-                <v-col v-if="idea.brandFacet" cols="12" md="6">
-                  <div class="text-subtitle-2 text-grey">Brand Facet:</div>
-                  <div class="text-body-1">{{ idea.brandFacet }}</div>
-                </v-col>
-                <v-col v-if="idea.recommendedChannel" cols="12" md="6">
-                  <div class="text-subtitle-2 text-grey">Recommended Channel:</div>
-                  <div class="text-body-1">{{ idea.recommendedChannel }}</div>
-                </v-col>
-              </v-row>
-              
-              <!-- Hook/Question -->
-              <div v-if="idea.question" class="mb-4">
-                <div class="text-h6">Hook:</div>
-                <div class="text-body-1">{{ idea.question }}</div>
-              </div>
-              
-              <!-- Short Description -->
-              <div v-if="idea.body" class="mb-4">
-                <div class="text-h6">Description:</div>
-                <div class="text-body-1">{{ idea.body }}</div>
-              </div>
-              
-              <!-- Draft Text (Full Content) -->
-              <div v-if="idea.draftText" class="mb-4">
-                <div class="text-h6">Draft Text:</div>
-                <v-card variant="outlined" class="pa-4">
-                  <div class="text-body-1" style="white-space: pre-wrap;">{{ idea.draftText }}</div>
-                </v-card>
-              </div>
+    <!-- Main Content -->
+    <template v-else-if="idea">
+      <!-- Header with Breadcrumbs -->
+      <IdeaHeader :idea="idea" />
 
-              <!-- Visual Description -->
-              <div v-if="idea.visualDescription" class="mb-4">
-                <div class="text-h6">Visual Description:</div>
-                <v-card variant="outlined" class="pa-3">
-                  <v-icon class="mr-2" color="purple">mdi-image-outline</v-icon>
-                  <span class="text-body-2">{{ idea.visualDescription }}</span>
-                </v-card>
-              </div>
+      <!-- Content -->
+      <main class="idea-main">
+        <IdeaContent :idea="idea" />
 
-              <!-- Announcement Text -->
-              <div v-if="idea.announcementText" class="mb-4">
-                <div class="text-h6">LinkedIn Announcement:</div>
-                <v-card variant="outlined" class="pa-3">
-                  <v-icon class="mr-2" color="blue">mdi-linkedin</v-icon>
-                  <span class="text-body-2">{{ idea.announcementText }}</span>
-                </v-card>
-              </div>
-              
-              <!-- Polished Content -->
-              <div v-if="idea.polishedBody" class="mb-4">
-                <div class="text-h6">Polished Content:</div>
-                <v-card variant="tonal" color="success" class="pa-4">
-                  <div class="text-body-1" style="white-space: pre-wrap;">{{ idea.polishedBody }}</div>
-                </v-card>
-              </div>
-              
-              <!-- Tags -->
-              <div v-if="idea.tags" class="mb-4">
-                <div class="text-h6">Tags:</div>
-                <div>
-                  <v-chip
-                    v-for="(tag, index) in parseTags(idea.tags)"
-                    :key="index"
-                    class="mr-2 mb-2"
-                    size="small"
-                  >
-                    {{ tag }}
-                  </v-chip>
-                </div>
-              </div>
-              
-              <!-- Related Content Strategy -->
-              <div v-if="idea.content_strategy" class="mb-4">
-                <div class="text-h6">Content Strategy:</div>
-                <v-chip color="purple" variant="outlined">
-                  {{ idea.content_strategy.name || 'Strategy' }}
-                </v-chip>
-              </div>
-
-              <!-- Related Audio -->
-              <div v-if="idea.audio_source" class="mb-4">
-                <div class="text-h6">Related Audio:</div>
-                <v-btn
-                  color="primary"
-                  variant="outlined"
-                  :to="'/audio'"
-                  prepend-icon="mdi-headphones"
-                >
-                  View Audio Source
-                </v-btn>
-              </div>
-            </v-card-text>
-            
-            <v-divider></v-divider>
-
-            <v-card-actions class="pa-4">
-              <v-btn
-                color="grey"
-                variant="outlined"
-                @click="$router.push('/ideas')"
-                prepend-icon="mdi-arrow-left"
-              >
-                Back to List
-              </v-btn>
-              
-              <v-spacer></v-spacer>
-
-              <!-- Feedback Buttons -->
-              <v-btn
-                color="success"
-                variant="outlined"
-                @click="handleLike"
-                :loading="likeLoading"
-                :disabled="dislikeLoading || polishLoading"
-                prepend-icon="mdi-thumb-up"
-              >
-                Like
-              </v-btn>
-              
-              <v-btn
-                color="error"
-                variant="outlined"
-                @click="handleDislike"
-                :loading="dislikeLoading"
-                :disabled="likeLoading || polishLoading"
-                prepend-icon="mdi-thumb-down"
-                class="ml-2"
-              >
-                Dislike
-              </v-btn>
-
-              <!-- Polish Button with Popover -->
-              <v-menu
-                v-model="polishMenuOpen"
-                :close-on-content-click="false"
-                location="top center"
-                offset="10"
-              >
-                <template v-slot:activator="{ props }">
-                  <v-btn
-                    color="purple"
-                    variant="elevated"
-                    v-bind="props"
-                    :loading="polishLoading"
-                    :disabled="likeLoading || dislikeLoading"
-                    prepend-icon="mdi-auto-fix"
-                    class="ml-4"
-                  >
-                    Polish
-                  </v-btn>
-                </template>
-
-                <v-card min-width="400">
-                  <v-card-text>
-                    <p class="mb-2 text-grey-darken-1">Optionally, add feedback to guide the AI.</p>
-                    <v-textarea
-                      v-model="polishFeedback"
-                      label="e.g., 'Make it funnier', 'Add a call to action'"
-                      rows="3"
-                      variant="outlined"
-                      auto-grow
-                      hide-details
-                    ></v-textarea>
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn text @click="closePolishMenu">Cancel</v-btn>
-                    <v-btn
-                      color="purple"
-                      variant="elevated"
-                      @click="submitPolishRequest"
-                    >
-                      Submit
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-menu>
-
-              <!-- Post to Telegram Button -->
-              <v-btn
-                v-if="idea.polishedBody"
-                color="blue"
-                variant="elevated"
-                prepend-icon="mdi-send"
-                class="ml-2"
-                @click="openPostDialog"
-                :loading="publishing"
-              >
-                Post to TG
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-col>
-      </v-row>
+        <!-- Actions -->
+        <IdeaActions
+          :like-loading="likeLoading"
+          :dislike-loading="dislikeLoading"
+          :polish-loading="polishLoading"
+          :publishing="publishing"
+          :has-polished-content="!!idea.polishedBody"
+          @like="handleLike"
+          @dislike="handleDislike"
+          @polish="submitPolishRequest"
+          @post="openPostDialog"
+        />
+      </main>
 
       <!-- Telegram Post Dialog -->
-      <v-dialog v-model="postDialogOpen" max-width="500">
-        <v-card>
-          <v-card-title>Post to Telegram</v-card-title>
-          <v-card-text>
-            <p class="mb-4">Select a channel to post this idea.</p>
-            <v-select
-              v-model="selectedChannelId"
-              :items="channels"
-              item-title="title"
-              item-value="documentId"
-              label="Select Channel"
-              variant="outlined"
-              :loading="channelsLoading"
-              no-data-text="No channels found"
-            ></v-select>
-            <div v-if="channels.length === 0 && !channelsLoading" class="text-caption text-red mt-2">
-               No channels found. <router-link to="/posting/setup">Setup Telegram</router-link>
-            </div>
-          </v-card-text>
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn text @click="postDialogOpen = false">Cancel</v-btn>
-            <v-btn 
-              color="blue" 
-              variant="elevated"
-              @click="postToTelegram" 
-              :loading="publishing" 
-              :disabled="!selectedChannelId"
-            >
-              Post
-            </v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
+      <TelegramPostDialog
+        v-model="postDialogOpen"
+        :selected-channel="selectedChannelId"
+        :channels="channels"
+        :channels-loading="channelsLoading"
+        :publishing="publishing"
+        @update:selected-channel="selectedChannelId = $event"
+        @post="postToTelegram"
+      />
+    </template>
 
-      <!-- Snackbar for feedback -->
-      <v-snackbar
-        v-model="snackbar"
-        :color="snackbarColor"
-        :timeout="3000"
-      >
-        {{ snackbarMessage }}
-      </v-snackbar>
-    </div>
-    
-    <div v-else>
+    <!-- Not Found State -->
+    <div v-else class="error-state">
       <v-alert type="warning">Idea not found</v-alert>
     </div>
-  </v-container>
+
+    <!-- Snackbar for feedback -->
+    <v-snackbar
+      v-model="snackbar"
+      :color="snackbarColor"
+      :timeout="3000"
+    >
+      {{ snackbarMessage }}
+    </v-snackbar>
+  </div>
 </template>
 
 <script lang="ts">
@@ -317,132 +68,69 @@ import { useRoute } from 'vue-router';
 import { useStore } from 'vuex';
 import { ideasService, Idea } from '../api/ideas.service';
 import { postingService } from '../../posting/api/posting.service';
-import { formatDateTime } from '@/core/helpers/dateFormat';
 
-interface BreadcrumbItem {
-  title: string;
-  to?: string;
-  disabled?: boolean;
-  icon?: string;
-}
+// Components
+import IdeaHeader from './components/IdeaHeader.vue';
+import IdeaContent from './components/IdeaContent.vue';
+import IdeaActions from './components/IdeaActions.vue';
+import TelegramPostDialog from './components/TelegramPostDialog.vue';
 
 export default {
   name: 'IdeaDetail',
-  
+
+  components: {
+    IdeaHeader,
+    IdeaContent,
+    IdeaActions,
+    TelegramPostDialog,
+  },
+
   setup() {
     const route = useRoute();
+    const store = useStore();
+
+    // State
     const idea = ref<Idea | null>(null);
     const loading = ref(true);
     const error = ref<string | null>(null);
-    
-    // Computed breadcrumbs based on idea and session
-    const breadcrumbs = computed((): BreadcrumbItem[] => {
-      const items: BreadcrumbItem[] = [];
-      
-      // Always start with Home
-      items.push({
-        title: 'Home',
-        to: '/',
-        icon: 'mdi-home'
-      });
-      
-      // If idea has a session, show session path
-      if (idea.value?.session) {
-        items.push({
-          title: 'Sessions',
-          to: '/sessions'
-        });
-        
-        items.push({
-          title: idea.value.session.title || 'Session',
-          to: `/sessions/${idea.value.session.documentId}`
-        });
-        
-        // Ideas (context)
-        items.push({
-          title: 'Ideas',
-          disabled: true
-        });
-      } else {
-        // No session - show Ideas list
-        items.push({
-          title: 'Ideas',
-          to: '/ideas'
-        });
-      }
-      
-      // Current idea (disabled, current page)
-      items.push({
-        title: idea.value?.title || 'Idea',
-        disabled: true
-      });
-      
-      return items;
-    });
-    
+
     // Feedback state
     const likeLoading = ref(false);
     const dislikeLoading = ref(false);
     const polishLoading = ref(false);
-    
+
     // Snackbar state
     const snackbar = ref(false);
     const snackbarMessage = ref('');
     const snackbarColor = ref('success');
-    
-    // Polish state
-    const polishMenuOpen = ref(false);
-    const polishFeedback = ref('');
 
     // Telegram Posting
     const postDialogOpen = ref(false);
-    const selectedChannelId = ref(null);
+    const selectedChannelId = ref<string | null>(null);
     const publishing = ref(false);
-    const store = useStore();
-    
+
     const channels = computed(() => store.getters['posting/channels']);
     const channelsLoading = computed(() => store.getters['posting/isLoading']);
 
-    const openPostDialog = () => {
-      postDialogOpen.value = true;
-      store.dispatch('posting/fetchChannels');
+    // Helper
+    const showSnackbar = (message: string, color = 'success') => {
+      snackbarMessage.value = message;
+      snackbarColor.value = color;
+      snackbar.value = true;
     };
 
-    const postToTelegram = async () => {
-      if (!idea.value || !selectedChannelId.value) return;
-      
-      publishing.value = true;
-      try {
-        const result = await postingService.publishIdea(idea.value.documentId, selectedChannelId.value);
-        
-        snackbarMessage.value = 'Posted to Telegram successfully!';
-        snackbarColor.value = 'success';
-        snackbar.value = true;
-        postDialogOpen.value = false;
-        
-        if (result.url) {
-            // Optional: open the message
-             window.open(result.url, '_blank');
-        }
-      } catch (err: unknown) {
-        console.error('Error posting to Telegram:', err);
-        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-        snackbarMessage.value = axiosError.response?.data?.error?.message || 'Failed to post to Telegram';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
-      } finally {
-        publishing.value = false;
-      }
+    const getIdeaId = (): string => {
+      return Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
     };
-    
+
+    // API Methods
     const fetchIdea = async () => {
       loading.value = true;
       error.value = null;
-      
+
       try {
-        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        const ideaId = getIdeaId();
         const response = await ideasService.getIdea(ideaId);
-        // Strapi v5 returns data directly without attributes wrapper
         idea.value = response.data;
       } catch (err: unknown) {
         console.error('Error fetching idea:', err);
@@ -451,124 +139,151 @@ export default {
         loading.value = false;
       }
     };
-    
+
     const handleLike = async () => {
       likeLoading.value = true;
       try {
-        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        const ideaId = getIdeaId();
         await ideasService.likeIdea(ideaId);
-        snackbarMessage.value = 'You liked this idea!';
-        snackbarColor.value = 'success';
-        snackbar.value = true;
+        showSnackbar('You liked this idea!');
       } catch (err) {
         console.error('Error liking idea:', err);
-        snackbarMessage.value = 'Failed to record like';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
+        showSnackbar('Failed to record like', 'error');
       } finally {
         likeLoading.value = false;
       }
     };
-    
+
     const handleDislike = async () => {
       dislikeLoading.value = true;
       try {
-        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
+        const ideaId = getIdeaId();
         await ideasService.dislikeIdea(ideaId);
-        snackbarMessage.value = 'You disliked this idea.';
-        snackbarColor.value = 'warning';
-        snackbar.value = true;
+        showSnackbar('You disliked this idea.', 'warning');
       } catch (err) {
         console.error('Error disliking idea:', err);
-        snackbarMessage.value = 'Failed to record dislike';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
+        showSnackbar('Failed to record dislike', 'error');
       } finally {
         dislikeLoading.value = false;
       }
     };
-    
-    const closePolishMenu = () => {
-      polishMenuOpen.value = false;
-    };
-    
-    const submitPolishRequest = async () => {
+
+    const submitPolishRequest = async (feedback: string) => {
       polishLoading.value = true;
       try {
-        const ideaId = Array.isArray(route.params.id) ? route.params.id[0] : route.params.id;
-        const response = await ideasService.polishIdea(ideaId, polishFeedback.value);
-        
+        const ideaId = getIdeaId();
+        const response = await ideasService.polishIdea(ideaId, feedback);
+
         if (response.data) {
           idea.value = response.data;
-          
-          snackbarMessage.value = 'Idea polished successfully!';
-          snackbarColor.value = 'success';
-          snackbar.value = true;
-          
-          closePolishMenu();
-          polishFeedback.value = ''; // Clear feedback on success
+          showSnackbar('Idea polished successfully!');
         }
       } catch (err: unknown) {
         console.error('Error polishing idea:', err);
         const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
-        snackbarMessage.value = axiosError.response?.data?.error?.message || 'Failed to polish idea';
-        snackbarColor.value = 'error';
-        snackbar.value = true;
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to polish idea',
+          'error'
+        );
       } finally {
         polishLoading.value = false;
       }
     };
-    
-    const formatDate = (dateString: string): string => {
-      return formatDateTime(dateString);
+
+    const openPostDialog = () => {
+      postDialogOpen.value = true;
+      store.dispatch('posting/fetchChannels');
     };
-    
-    const getStatusColor = (status: string): string => {
-      switch (status) {
-        case 'new': return 'red';
-        case 'readyToPublish': return 'orange';
-        case 'published': return 'green';
-        default: return 'grey';
+
+    const postToTelegram = async () => {
+      if (!idea.value || !selectedChannelId.value) return;
+
+      publishing.value = true;
+      try {
+        const result = await postingService.publishIdea(
+          idea.value.documentId,
+          selectedChannelId.value
+        );
+
+        showSnackbar('Posted to Telegram successfully!');
+        postDialogOpen.value = false;
+
+        if (result.url) {
+          window.open(result.url, '_blank');
+        }
+      } catch (err: unknown) {
+        console.error('Error posting to Telegram:', err);
+        const axiosError = err as { response?: { data?: { error?: { message?: string } } } };
+        showSnackbar(
+          axiosError.response?.data?.error?.message || 'Failed to post to Telegram',
+          'error'
+        );
+      } finally {
+        publishing.value = false;
       }
     };
-    
-    const parseTags = (tagsString: string): string[] => {
-      if (!tagsString) return [];
-      return tagsString.split(',').map((tag: string) => tag.trim());
-    };
-    
+
+    // Lifecycle
     onMounted(() => {
       fetchIdea();
     });
-    
+
     return {
+      // State
       idea,
       loading,
       error,
-      breadcrumbs,
       likeLoading,
       dislikeLoading,
       polishLoading,
       snackbar,
       snackbarMessage,
       snackbarColor,
-      polishMenuOpen,
-      polishFeedback,
       postDialogOpen,
       selectedChannelId,
       publishing,
       channels,
       channelsLoading,
-      openPostDialog,
-      postToTelegram,
+
+      // Methods
       handleLike,
       handleDislike,
-      closePolishMenu,
       submitPolishRequest,
-      formatDate,
-      getStatusColor,
-      parseTags
+      openPostDialog,
+      postToTelegram,
     };
-  }
+  },
 };
 </script>
+
+<style scoped>
+.idea-detail-page {
+  min-height: calc(100vh - 64px);
+  background: #f5f5f5;
+}
+
+/* Loading / Error States */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px;
+  color: #666;
+}
+
+.loading-state p {
+  margin-top: 16px;
+}
+
+/* Main Content */
+.idea-main {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+</style>

@@ -1,13 +1,13 @@
 import BaseButton from './BaseButton.vue';
 import ConfirmationDialog from './ConfirmationDialog.vue';
+import PageBreadcrumbs from './PageBreadcrumbs.vue';
 
 // Export components
 export {
   BaseButton,
-  ConfirmationDialog
+  ConfirmationDialog,
+  PageBreadcrumbs
 };
 
 // Export types
-export type { 
-  // Add component prop types here as needed
-};
+export type { BreadcrumbItem } from './types';
