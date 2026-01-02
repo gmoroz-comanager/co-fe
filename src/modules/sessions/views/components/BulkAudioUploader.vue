@@ -3,158 +3,360 @@
     <v-card class="bulk-uploader-card">
       <v-card-title class="d-flex align-center justify-space-between">
         <span>Add Audio Sources</span>
-        <v-btn icon variant="text" size="small" @click="handleClose" :disabled="isUploading">
+        <v-btn icon variant="text" size="small" @click="handleClose" :disabled="isUploading || isSubmittingTranscript || isSubmittingTextFiles">
           <v-icon>mdi-close</v-icon>
         </v-btn>
       </v-card-title>
 
       <v-card-text>
-        <!-- Default Source Type -->
-        <v-select
-          v-model="defaultSourceType"
-          :items="sourceTypeOptions"
-          label="Default Source Type"
-          variant="outlined"
-          density="compact"
-          class="mb-4"
-          :disabled="isUploading"
-        />
+        <!-- Mode Tabs -->
+        <v-tabs v-model="inputMode" class="mb-4" :disabled="isUploading || isSubmittingTranscript || isSubmittingTextFiles">
+          <v-tab value="audio">
+            <v-icon start>mdi-file-music</v-icon>
+            Audio Files
+          </v-tab>
+          <v-tab value="text-files">
+            <v-icon start>mdi-file-document-multiple</v-icon>
+            Text Files
+          </v-tab>
+          <v-tab value="transcript">
+            <v-icon start>mdi-text-box</v-icon>
+            Paste Text
+          </v-tab>
+        </v-tabs>
 
-        <!-- Drop Zone -->
-        <div
-          class="drop-zone"
-          :class="{ 
-            dragging: isDragging, 
-            'has-files': pendingFiles.length > 0,
-            disabled: isUploading 
-          }"
-          @dragenter.prevent="onDragEnter"
-          @dragover.prevent
-          @dragleave.prevent="onDragLeave"
-          @drop.prevent="onDrop"
-          @click="triggerFileInput"
-        >
-          <input
-            ref="fileInput"
-            type="file"
-            accept="audio/*"
-            multiple
-            class="d-none"
-            @change="onFileSelect"
+        <!-- Audio Upload Mode -->
+        <template v-if="inputMode === 'audio'">
+          <!-- Default Source Type -->
+          <v-select
+            v-model="defaultSourceType"
+            :items="sourceTypeOptions"
+            label="Default Source Type"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
             :disabled="isUploading"
           />
-          
-          <template v-if="pendingFiles.length === 0">
-            <v-icon size="64" color="primary" class="mb-3">mdi-cloud-upload-outline</v-icon>
-            <p class="drop-title">Drag & drop audio files here</p>
-            <p class="drop-hint">or click to browse</p>
-            <p class="drop-formats">Supported formats: MP3, WAV, M4A, OGG, FLAC</p>
-          </template>
-          
-          <template v-else>
-            <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
-            <p class="drop-title">{{ pendingFiles.length }} file(s) selected</p>
-            <p class="drop-hint">Click to add more files</p>
-          </template>
-        </div>
 
-        <!-- File List -->
-        <div v-if="pendingFiles.length > 0" class="file-list">
-          <div class="file-list-header">
-            <span>Files to upload</span>
-            <v-btn 
-              variant="text" 
-              size="small" 
-              color="error" 
-              @click="clearAllFiles"
+          <!-- Drop Zone -->
+          <div
+            class="drop-zone"
+            :class="{ 
+              dragging: isDragging, 
+              'has-files': pendingFiles.length > 0,
+              disabled: isUploading 
+            }"
+            @dragenter.prevent="onDragEnter"
+            @dragover.prevent
+            @dragleave.prevent="onDragLeave"
+            @drop.prevent="onDrop"
+            @click="triggerFileInput"
+          >
+            <input
+              ref="fileInput"
+              type="file"
+              accept="audio/*"
+              multiple
+              class="d-none"
+              @change="onFileSelect"
               :disabled="isUploading"
-            >
-              Clear All
-            </v-btn>
+            />
+            
+            <template v-if="pendingFiles.length === 0">
+              <v-icon size="64" color="primary" class="mb-3">mdi-cloud-upload-outline</v-icon>
+              <p class="drop-title">Drag & drop audio files here</p>
+              <p class="drop-hint">or click to browse</p>
+              <p class="drop-formats">Supported formats: MP3, WAV, M4A, OGG, FLAC</p>
+            </template>
+            
+            <template v-else>
+              <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
+              <p class="drop-title">{{ pendingFiles.length }} file(s) selected</p>
+              <p class="drop-hint">Click to add more files</p>
+            </template>
           </div>
 
-          <div class="file-items">
-            <div
-              v-for="(file, index) in pendingFiles"
-              :key="file.id"
-              class="file-item"
-              :class="{ 
-                uploading: file.status === 'uploading',
-                completed: file.status === 'completed',
-                error: file.status === 'error'
-              }"
-            >
-              <div class="file-icon">
-                <v-icon v-if="file.status === 'pending'" color="grey">mdi-file-music</v-icon>
-                <v-icon v-else-if="file.status === 'uploading'" color="primary">mdi-upload</v-icon>
-                <v-icon v-else-if="file.status === 'completed'" color="success">mdi-check-circle</v-icon>
-                <v-icon v-else-if="file.status === 'error'" color="error">mdi-alert-circle</v-icon>
-              </div>
+          <!-- File List -->
+          <div v-if="pendingFiles.length > 0" class="file-list">
+            <div class="file-list-header">
+              <span>Files to upload</span>
+              <v-btn 
+                variant="text" 
+                size="small" 
+                color="error" 
+                @click="clearAllFiles"
+                :disabled="isUploading"
+              >
+                Clear All
+              </v-btn>
+            </div>
 
-              <div class="file-info">
-                <v-text-field
-                  v-model="file.title"
-                  variant="plain"
-                  density="compact"
-                  hide-details
-                  class="file-title-input"
-                  :disabled="file.status !== 'pending'"
-                  placeholder="Enter title"
-                />
-                <div class="file-meta">
-                  <span class="file-size">{{ formatFileSize(file.file.size) }}</span>
-                  <v-select
-                    v-model="file.source_type"
-                    :items="sourceTypeOptions"
+            <div class="file-items">
+              <div
+                v-for="(file, index) in pendingFiles"
+                :key="file.id"
+                class="file-item"
+                :class="{ 
+                  uploading: file.status === 'uploading',
+                  completed: file.status === 'completed',
+                  error: file.status === 'error'
+                }"
+              >
+                <div class="file-icon">
+                  <v-icon v-if="file.status === 'pending'" color="grey">mdi-file-music</v-icon>
+                  <v-icon v-else-if="file.status === 'uploading'" color="primary">mdi-upload</v-icon>
+                  <v-icon v-else-if="file.status === 'completed'" color="success">mdi-check-circle</v-icon>
+                  <v-icon v-else-if="file.status === 'error'" color="error">mdi-alert-circle</v-icon>
+                </div>
+
+                <div class="file-info">
+                  <v-text-field
+                    v-model="file.title"
                     variant="plain"
                     density="compact"
                     hide-details
-                    class="file-type-select"
+                    class="file-title-input"
                     :disabled="file.status !== 'pending'"
+                    placeholder="Enter title"
                   />
+                  <div class="file-meta">
+                    <span class="file-size">{{ formatFileSize(file.file.size) }}</span>
+                    <v-select
+                      v-model="file.source_type"
+                      :items="sourceTypeOptions"
+                      variant="plain"
+                      density="compact"
+                      hide-details
+                      class="file-type-select"
+                      :disabled="file.status !== 'pending'"
+                    />
+                  </div>
+                  
+                  <!-- Progress Bar -->
+                  <v-progress-linear
+                    v-if="file.status === 'uploading'"
+                    :model-value="file.progress"
+                    color="primary"
+                    height="4"
+                    rounded
+                    class="mt-2"
+                  />
+                  
+                  <!-- Error Message -->
+                  <div v-if="file.status === 'error'" class="file-error">
+                    {{ file.error }}
+                  </div>
                 </div>
-                
-                <!-- Progress Bar -->
-                <v-progress-linear
-                  v-if="file.status === 'uploading'"
-                  :model-value="file.progress"
-                  color="primary"
-                  height="4"
-                  rounded
-                  class="mt-2"
-                />
-                
-                <!-- Error Message -->
-                <div v-if="file.status === 'error'" class="file-error">
-                  {{ file.error }}
-                </div>
-              </div>
 
-              <div class="file-actions">
-                <v-btn
-                  v-if="file.status === 'pending'"
-                  icon
-                  variant="text"
-                  size="small"
-                  @click="removeFile(index)"
-                >
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-                <span v-else-if="file.status === 'uploading'" class="progress-text">
-                  {{ file.progress }}%
-                </span>
+                <div class="file-actions">
+                  <v-btn
+                    v-if="file.status === 'pending'"
+                    icon
+                    variant="text"
+                    size="small"
+                    @click="removeFile(index)"
+                  >
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                  <span v-else-if="file.status === 'uploading'" class="progress-text">
+                    {{ file.progress }}%
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Upload Summary -->
-        <div v-if="uploadSummary" class="upload-summary" :class="uploadSummary.type">
-          <v-icon :color="uploadSummary.type === 'success' ? 'success' : 'error'" class="mr-2">
-            {{ uploadSummary.type === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
-          </v-icon>
-          <span>{{ uploadSummary.message }}</span>
-        </div>
+          <!-- Upload Summary -->
+          <div v-if="uploadSummary" class="upload-summary" :class="uploadSummary.type">
+            <v-icon :color="uploadSummary.type === 'success' ? 'success' : 'error'" class="mr-2">
+              {{ uploadSummary.type === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+            </v-icon>
+            <span>{{ uploadSummary.message }}</span>
+          </div>
+        </template>
+
+        <!-- Text Files Mode -->
+        <template v-else-if="inputMode === 'text-files'">
+          <!-- Default Source Type for Text Files -->
+          <v-select
+            v-model="textFilesSourceType"
+            :items="sourceTypeOptions"
+            label="Default Source Type"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
+            :disabled="isSubmittingTextFiles"
+          />
+
+          <!-- Text Files Drop Zone -->
+          <div
+            class="drop-zone"
+            :class="{ 
+              dragging: isTextFilesDragging, 
+              'has-files': pendingTextFiles.length > 0,
+              disabled: isSubmittingTextFiles 
+            }"
+            @dragenter.prevent="onTextFilesDragEnter"
+            @dragover.prevent
+            @dragleave.prevent="onTextFilesDragLeave"
+            @drop.prevent="onTextFilesDrop"
+            @click="triggerTextFileInput"
+          >
+            <input
+              ref="textFileInput"
+              type="file"
+              accept=".txt,text/plain"
+              multiple
+              class="d-none"
+              @change="onTextFileSelect"
+              :disabled="isSubmittingTextFiles"
+            />
+            
+            <template v-if="pendingTextFiles.length === 0">
+              <v-icon size="64" color="primary" class="mb-3">mdi-file-document-outline</v-icon>
+              <p class="drop-title">Drag & drop text files here</p>
+              <p class="drop-hint">or click to browse</p>
+              <p class="drop-formats">Supported formats: .txt</p>
+            </template>
+            
+            <template v-else>
+              <v-icon size="48" color="success" class="mb-2">mdi-check-circle-outline</v-icon>
+              <p class="drop-title">{{ pendingTextFiles.length }} file(s) selected</p>
+              <p class="drop-hint">Click to add more files</p>
+            </template>
+          </div>
+
+          <!-- Text File List -->
+          <div v-if="pendingTextFiles.length > 0" class="file-list">
+            <div class="file-list-header">
+              <span>Files to process</span>
+              <v-btn 
+                variant="text" 
+                size="small" 
+                color="error" 
+                @click="clearAllTextFiles"
+                :disabled="isSubmittingTextFiles"
+              >
+                Clear All
+              </v-btn>
+            </div>
+
+            <div class="file-items">
+              <div
+                v-for="(file, index) in pendingTextFiles"
+                :key="file.id"
+                class="file-item"
+                :class="{ 
+                  uploading: file.status === 'uploading',
+                  completed: file.status === 'completed',
+                  error: file.status === 'error'
+                }"
+              >
+                <div class="file-icon">
+                  <v-icon v-if="file.status === 'pending'" color="grey">mdi-file-document</v-icon>
+                  <v-icon v-else-if="file.status === 'uploading'" color="primary">mdi-upload</v-icon>
+                  <v-icon v-else-if="file.status === 'completed'" color="success">mdi-check-circle</v-icon>
+                  <v-icon v-else-if="file.status === 'error'" color="error">mdi-alert-circle</v-icon>
+                </div>
+
+                <div class="file-info">
+                  <v-text-field
+                    v-model="file.title"
+                    variant="plain"
+                    density="compact"
+                    hide-details
+                    class="file-title-input"
+                    :disabled="file.status !== 'pending'"
+                    placeholder="Enter title"
+                  />
+                  <div class="file-meta">
+                    <span class="file-size">{{ formatFileSize(file.file.size) }}</span>
+                    <span class="text-caption text-grey ml-2">{{ file.charCount }} characters</span>
+                    <v-select
+                      v-model="file.source_type"
+                      :items="sourceTypeOptions"
+                      variant="plain"
+                      density="compact"
+                      hide-details
+                      class="file-type-select"
+                      :disabled="file.status !== 'pending'"
+                    />
+                  </div>
+                  
+                  <!-- Error Message -->
+                  <div v-if="file.status === 'error'" class="file-error">
+                    {{ file.error }}
+                  </div>
+                </div>
+
+                <div class="file-actions">
+                  <v-btn
+                    v-if="file.status === 'pending'"
+                    icon
+                    variant="text"
+                    size="small"
+                    @click="removeTextFile(index)"
+                  >
+                    <v-icon>mdi-close</v-icon>
+                  </v-btn>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text Files Summary -->
+          <div v-if="textFilesSummary" class="upload-summary" :class="textFilesSummary.type">
+            <v-icon :color="textFilesSummary.type === 'success' ? 'success' : 'error'" class="mr-2">
+              {{ textFilesSummary.type === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+            </v-icon>
+            <span>{{ textFilesSummary.message }}</span>
+          </div>
+        </template>
+
+        <!-- Transcript Mode -->
+        <template v-else>
+          <v-text-field
+            v-model="transcriptForm.title"
+            label="Title"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
+            :disabled="isSubmittingTranscript"
+            placeholder="Enter source title"
+          />
+
+          <v-select
+            v-model="transcriptForm.source_type"
+            :items="sourceTypeOptions"
+            label="Source Type"
+            variant="outlined"
+            density="compact"
+            class="mb-4"
+            :disabled="isSubmittingTranscript"
+          />
+
+          <v-textarea
+            v-model="transcriptForm.transcription"
+            label="Transcript Text"
+            variant="outlined"
+            rows="10"
+            :disabled="isSubmittingTranscript"
+            placeholder="Paste or type your transcript here..."
+            class="mb-2"
+          />
+
+          <p class="text-caption text-grey mb-4">
+            Paste text from a meeting transcript, interview notes, or any other text content.
+          </p>
+
+          <!-- Transcript Submit Status -->
+          <div v-if="transcriptSubmitStatus" class="upload-summary" :class="transcriptSubmitStatus.type">
+            <v-icon :color="transcriptSubmitStatus.type === 'success' ? 'success' : 'error'" class="mr-2">
+              {{ transcriptSubmitStatus.type === 'success' ? 'mdi-check-circle' : 'mdi-alert-circle' }}
+            </v-icon>
+            <span>{{ transcriptSubmitStatus.message }}</span>
+          </div>
+        </template>
       </v-card-text>
 
       <v-card-actions class="pa-4">
@@ -162,17 +364,42 @@
         <v-btn 
           variant="text" 
           @click="handleClose"
-          :disabled="isUploading"
+          :disabled="isUploading || isSubmittingTranscript || isSubmittingTextFiles"
         >
-          {{ hasCompletedUploads ? 'Close' : 'Cancel' }}
+          {{ hasAnyCompletedUploads ? 'Close' : 'Cancel' }}
         </v-btn>
+        
+        <!-- Audio Mode Button -->
         <v-btn
+          v-if="inputMode === 'audio'"
           color="primary"
           @click="uploadAll"
           :loading="isUploading"
           :disabled="pendingFiles.length === 0 || allFilesProcessed"
         >
           {{ uploadButtonText }}
+        </v-btn>
+        
+        <!-- Text Files Mode Button -->
+        <v-btn
+          v-else-if="inputMode === 'text-files'"
+          color="primary"
+          @click="submitAllTextFiles"
+          :loading="isSubmittingTextFiles"
+          :disabled="pendingTextFiles.length === 0 || allTextFilesProcessed"
+        >
+          {{ textFilesButtonText }}
+        </v-btn>
+        
+        <!-- Transcript Mode Button -->
+        <v-btn
+          v-else
+          color="primary"
+          @click="submitTranscript"
+          :loading="isSubmittingTranscript"
+          :disabled="!transcriptForm.title || !transcriptForm.transcription"
+        >
+          Add Source
         </v-btn>
       </v-card-actions>
     </v-card>
@@ -192,6 +419,17 @@ interface PendingFile {
   progress: number;
   error?: string;
   uploadedFileId?: number;
+}
+
+interface PendingTextFile {
+  id: string;
+  file: File;
+  title: string;
+  source_type: string;
+  content: string;
+  charCount: number;
+  status: 'pending' | 'uploading' | 'completed' | 'error';
+  error?: string;
 }
 
 export default defineComponent({
@@ -217,6 +455,26 @@ export default defineComponent({
     const defaultSourceType = ref('dialogue');
     const pendingFiles = ref<PendingFile[]>([]);
     const isUploading = ref(false);
+    
+    // Input mode: 'audio', 'text-files', or 'transcript'
+    const inputMode = ref<'audio' | 'text-files' | 'transcript'>('audio');
+    
+    // Transcript form (paste text mode)
+    const transcriptForm = reactive({
+      title: '',
+      source_type: 'dialogue',
+      transcription: '',
+    });
+    const isSubmittingTranscript = ref(false);
+    const transcriptSubmitStatus = ref<{ type: 'success' | 'error'; message: string } | null>(null);
+    
+    // Text files mode
+    const textFileInput = ref<HTMLInputElement | null>(null);
+    const isTextFilesDragging = ref(false);
+    const textFilesDragCounter = ref(0);
+    const textFilesSourceType = ref('dialogue');
+    const pendingTextFiles = ref<PendingTextFile[]>([]);
+    const isSubmittingTextFiles = ref(false);
 
     const sourceTypeOptions = [
       { title: 'Dialogue', value: 'dialogue' },
@@ -262,6 +520,54 @@ export default defineComponent({
         return 'All Done';
       }
       return `Upload ${pending} file(s)`;
+    });
+    
+    // Text files computed
+    const textFilesSummary = computed(() => {
+      if (!pendingTextFiles.value.length) return null;
+      
+      const completed = pendingTextFiles.value.filter(f => f.status === 'completed').length;
+      const errors = pendingTextFiles.value.filter(f => f.status === 'error').length;
+      const total = pendingTextFiles.value.length;
+      
+      if (completed === 0 && errors === 0) return null;
+      
+      if (errors === 0 && completed === total) {
+        return {
+          type: 'success',
+          message: `All ${completed} file(s) processed successfully!`,
+        };
+      } else if (completed > 0 || errors > 0) {
+        return {
+          type: errors > 0 ? 'error' : 'success',
+          message: `${completed} processed, ${errors} failed out of ${total} file(s)`,
+        };
+      }
+      return null;
+    });
+    
+    const hasCompletedTextFiles = computed(() => {
+      return pendingTextFiles.value.some(f => f.status === 'completed');
+    });
+    
+    const allTextFilesProcessed = computed(() => {
+      return pendingTextFiles.value.length > 0 && 
+        pendingTextFiles.value.every(f => f.status === 'completed' || f.status === 'error');
+    });
+    
+    const textFilesButtonText = computed(() => {
+      const pending = pendingTextFiles.value.filter(f => f.status === 'pending').length;
+      if (pending === 0 && pendingTextFiles.value.length > 0) {
+        return 'All Done';
+      }
+      return `Process ${pending} file(s)`;
+    });
+    
+    // Combined check for any completed uploads across all modes
+    const hasAnyCompletedUploads = computed(() => {
+      return hasCompletedUploads.value || 
+        hasCompletedTextFiles.value || 
+        transcriptSubmitStatus.value?.type === 'success';
     });
 
     const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -408,22 +714,204 @@ export default defineComponent({
       }
     };
 
-    const handleClose = () => {
-      if (isUploading.value) return;
+    const submitTranscript = async () => {
+      if (!transcriptForm.title || !transcriptForm.transcription) return;
       
-      // Reset state
+      isSubmittingTranscript.value = true;
+      transcriptSubmitStatus.value = null;
+      
+      try {
+        await httpService.post('/audio-sources', {
+          data: {
+            title: transcriptForm.title,
+            source_type: transcriptForm.source_type,
+            transcription: transcriptForm.transcription,
+            work_status: 'transcribed', // Mark as already transcribed
+            session: props.sessionDocumentId,
+          },
+        });
+        
+        transcriptSubmitStatus.value = {
+          type: 'success',
+          message: 'Transcript source added successfully!',
+        };
+        
+        // Reset form for next entry
+        transcriptForm.title = '';
+        transcriptForm.transcription = '';
+        
+        emit('uploaded', 1);
+      } catch (error: any) {
+        console.error('Transcript submit error:', error);
+        transcriptSubmitStatus.value = {
+          type: 'error',
+          message: error.response?.data?.error?.message || error.message || 'Failed to add transcript',
+        };
+      } finally {
+        isSubmittingTranscript.value = false;
+      }
+    };
+    
+    // Text files methods
+    const readTextFileContent = (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          resolve(e.target?.result as string || '');
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read file'));
+        };
+        reader.readAsText(file);
+      });
+    };
+    
+    const addTextFiles = async (files: FileList | File[]) => {
+      const textFiles = Array.from(files).filter(
+        file => file.type === 'text/plain' || file.name.endsWith('.txt')
+      );
+      
+      for (const file of textFiles) {
+        // Check if file already exists
+        const exists = pendingTextFiles.value.some(
+          pf => pf.file.name === file.name && pf.file.size === file.size
+        );
+        
+        if (!exists) {
+          try {
+            const content = await readTextFileContent(file);
+            pendingTextFiles.value.push({
+              id: generateId(),
+              file,
+              title: extractFileName(file),
+              source_type: textFilesSourceType.value,
+              content,
+              charCount: content.length,
+              status: 'pending',
+            });
+          } catch (err) {
+            console.error('Failed to read file:', file.name, err);
+          }
+        }
+      }
+    };
+    
+    const onTextFilesDragEnter = () => {
+      textFilesDragCounter.value++;
+      isTextFilesDragging.value = true;
+    };
+    
+    const onTextFilesDragLeave = () => {
+      textFilesDragCounter.value--;
+      if (textFilesDragCounter.value === 0) {
+        isTextFilesDragging.value = false;
+      }
+    };
+    
+    const onTextFilesDrop = async (e: DragEvent) => {
+      isTextFilesDragging.value = false;
+      textFilesDragCounter.value = 0;
+      
+      if (isSubmittingTextFiles.value) return;
+      
+      if (e.dataTransfer?.files) {
+        await addTextFiles(e.dataTransfer.files);
+      }
+    };
+    
+    const triggerTextFileInput = () => {
+      if (isSubmittingTextFiles.value) return;
+      textFileInput.value?.click();
+    };
+    
+    const onTextFileSelect = async (e: Event) => {
+      const target = e.target as HTMLInputElement;
+      if (target.files) {
+        await addTextFiles(target.files);
+        target.value = '';
+      }
+    };
+    
+    const removeTextFile = (index: number) => {
+      pendingTextFiles.value.splice(index, 1);
+    };
+    
+    const clearAllTextFiles = () => {
+      pendingTextFiles.value = [];
+    };
+    
+    const submitSingleTextFile = async (pendingFile: PendingTextFile): Promise<boolean> => {
+      pendingFile.status = 'uploading';
+      
+      try {
+        await httpService.post('/audio-sources', {
+          data: {
+            title: pendingFile.title,
+            source_type: pendingFile.source_type,
+            transcription: pendingFile.content,
+            work_status: 'transcribed', // Mark as already transcribed
+            session: props.sessionDocumentId,
+          },
+        });
+        
+        pendingFile.status = 'completed';
+        return true;
+      } catch (error: any) {
+        console.error('Text file submit error:', error);
+        pendingFile.status = 'error';
+        pendingFile.error = error.response?.data?.error?.message || error.message || 'Failed to create source';
+        return false;
+      }
+    };
+    
+    const submitAllTextFiles = async () => {
+      const filesToSubmit = pendingTextFiles.value.filter(f => f.status === 'pending');
+      if (filesToSubmit.length === 0) return;
+      
+      isSubmittingTextFiles.value = true;
+      
+      for (const file of filesToSubmit) {
+        await submitSingleTextFile(file);
+      }
+      
+      isSubmittingTextFiles.value = false;
+      
+      const successCount = pendingTextFiles.value.filter(f => f.status === 'completed').length;
+      if (successCount > 0) {
+        emit('uploaded', successCount);
+      }
+    };
+
+    const handleClose = () => {
+      if (isUploading.value || isSubmittingTranscript.value || isSubmittingTextFiles.value) return;
+      
+      // Reset audio upload state
       pendingFiles.value = [];
       isDragging.value = false;
       dragCounter.value = 0;
+      
+      // Reset text files state
+      pendingTextFiles.value = [];
+      isTextFilesDragging.value = false;
+      textFilesDragCounter.value = 0;
+      
+      // Reset transcript form state
+      transcriptForm.title = '';
+      transcriptForm.source_type = 'dialogue';
+      transcriptForm.transcription = '';
+      transcriptSubmitStatus.value = null;
+      inputMode.value = 'audio';
       
       emit('update:modelValue', false);
       emit('close');
     };
 
-    // Reset files when dialog opens
+    // Reset state when dialog opens
     watch(() => props.modelValue, (newVal) => {
       if (newVal) {
         pendingFiles.value = [];
+        pendingTextFiles.value = [];
+        transcriptSubmitStatus.value = null;
       }
     });
 
@@ -448,6 +936,31 @@ export default defineComponent({
       clearAllFiles,
       uploadAll,
       handleClose,
+      // Transcript mode
+      inputMode,
+      transcriptForm,
+      isSubmittingTranscript,
+      transcriptSubmitStatus,
+      submitTranscript,
+      // Text files mode
+      textFileInput,
+      isTextFilesDragging,
+      textFilesSourceType,
+      pendingTextFiles,
+      isSubmittingTextFiles,
+      textFilesSummary,
+      hasCompletedTextFiles,
+      allTextFilesProcessed,
+      textFilesButtonText,
+      hasAnyCompletedUploads,
+      onTextFilesDragEnter,
+      onTextFilesDragLeave,
+      onTextFilesDrop,
+      triggerTextFileInput,
+      onTextFileSelect,
+      removeTextFile,
+      clearAllTextFiles,
+      submitAllTextFiles,
     };
   },
 });
